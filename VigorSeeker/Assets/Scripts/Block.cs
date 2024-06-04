@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.SearchService;
 using UnityEngine;
 
 [ExecuteAlways]
@@ -23,6 +25,21 @@ public class Block : MonoBehaviour
         //{
         //    //Debug.Log(x);
         //}
+        
+    }
+    /// <summary>
+    /// オブジェクトをレンダリングする際に呼ばれる関数
+    /// </summary>
+    private void OnRenderObject()
+    {
+        //編集モードの場合
+        if(!Application.isPlaying)
+        {
+            //全てのオブジェクトのUpdate関数を呼ぶ
+            EditorApplication.QueuePlayerLoopUpdate();
+            SceneView.RepaintAll();
+
+        }
     }
     // Start is called before the first frame update
     void Start()
@@ -34,6 +51,7 @@ public class Block : MonoBehaviour
     void Update()
     {
         //  v.Clear();
-        //Debug.Log("a");
+        Debug.Log("a");
+        //this.transform.position += new Vector3(0.1f, 0, 0);
     }
 }
