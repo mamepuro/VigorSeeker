@@ -5,23 +5,44 @@ using UnityEngine;
 [InitializeOnLoad]
 public static class CreateButtonUi
 {
+    public static Block _block;
     static CreateButtonUi()
     {
         SceneView.duringSceneGui += OnGui;
+        SceneView.duringSceneGui += SceneViewOnDuringSceneGui;
     }
 
     private static void OnGui(SceneView sceneView)
     {
         Handles.BeginGUI();
-
-        // ‚±‚±‚É UI‚ğ•`‰æ‚·‚éˆ—‚ğ‹Lq
+        //if (_block == null)
+        //{
+        //    _block = LoadDataTable();
+        //}
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ UIï¿½ï¿½`ï¿½æ‚·ï¿½éˆï¿½ï¿½ï¿½ï¿½ï¿½Lï¿½q
         ShowButtons(sceneView.position.size);
 
         Handles.EndGUI();
     }
 
+    private static void SceneViewOnDuringSceneGui(SceneView obj)
+    {
+        var ev = Event.current;
+        if (ev.type == EventType.KeyDown)
+        {
+            Debug.Log(ev.keyCode);
+            if (ev.keyCode == KeyCode.Space)
+            {
+                Debug.Log(Selection.gameObjects.Length);
+                //var b = (Block)Selection.gameObjects[0];
+                //b
+                //var b = (Selection.gameObjects[0] as Block).GetComponent<Block>();
+            }
+        }
+    }
+
     /// <summary>
-    /// ƒ{ƒ^ƒ“‚Ì•`‰æŠÖ”
+    /// ï¿½{ï¿½^ï¿½ï¿½ï¿½Ì•`ï¿½ï¿½Öï¿½
     /// </summary>
     private static void ShowButtons(Vector2 sceneSize)
     {
@@ -30,7 +51,8 @@ public static class CreateButtonUi
 
         foreach (var i in Enumerable.Range(0, count))
         {
-            // ‰æ–Ê‰º•”A…•½A’†‰›Šñ‚¹‚ğƒRƒ“ƒgƒ[ƒ‹‚·‚é Rect
+            //var block = new Block();
+            // ï¿½ï¿½Ê‰ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½ï¿½ï¿½ñ‚¹‚ï¿½ï¿½Rï¿½ï¿½ï¿½gï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Rect
             var rect = new Rect(
               sceneSize.x / 2 - buttonSize * count / 2 + buttonSize * i,
               sceneSize.y - buttonSize * 1.6f,
@@ -38,9 +60,19 @@ public static class CreateButtonUi
               buttonSize);
 
             if (GUI.Button(rect, i.ToString()))
-            {
-                Debug.Log("‚¨‚³‚ê‚½");
-            }
+                //{
+                //    var go = (Block)PrefabUtility.InstantiatePrefab(_block);
+                //    Selection.activeObject = go;
+                //    Undo.RegisterCreatedObjectUndo(go, "create object");
+                //var pre = AssetDatabase.LoadAssetAtPath<GameObject>("")
+                //Block block = PrefabUtility.InstantiatePrefab(block) as Block;
+                Debug.Log("æŠ¼ã•ã‚ŒãŸ");
         }
     }
+
 }
+
+//private static Block LoadDataTable()
+//{
+//    return AssetDatabase.LoadAssetAtPath<Block>("Assets/Script/Block.asset");
+//}
