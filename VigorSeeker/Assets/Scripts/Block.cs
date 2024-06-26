@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
+using System;
 //using UnityEditor.SearchService;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ public class Block : MonoBehaviour
     [SerializeField] Mesh mesh;
     // [SerializeField] MeshFilter meshFilter;
     [SerializeField] List<Vector3> v;
+    [SerializeField] public int ID;
     public GameObject pref;
     Spring spring;
 
@@ -21,7 +23,8 @@ public class Block : MonoBehaviour
             v.Add(transform.TransformPoint(v3));
 
         }
-        Debug.Log("Awake ");
+        Debug.Log("Info: Block awaked");
+        Debug.Log("Now" + DateTime.Now);
         var triangle = mesh.triangles;
         foreach (var x in triangle)
         {
