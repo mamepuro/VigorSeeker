@@ -8,11 +8,19 @@ using UnityEngine;
 [ExecuteAlways]
 public class Block : MonoBehaviour
 {
-    [SerializeField] Mesh mesh;
-    // [SerializeField] MeshFilter meshFilter;
+    [SerializeField] public Mesh mesh;
     [SerializeField] List<Vector3> v;
     [SerializeField] public int ID;
+    static int col = 0;
+    /// <summary>
+    /// 新しく頂点を追加するための一時的な頂点リスト
+    /// </summary>
+    [SerializeField] List<Vector3> _tmpVertices;
     Spring spring;
+    /// <summary>
+    /// シーンマネージャーへの参照
+    /// </summary>
+    DefaultScene defaultScene;
     const int _leftLegIndex = 1;
     const int _rightLegIndex = 5;
     /// <summary>
@@ -41,22 +49,23 @@ public class Block : MonoBehaviour
 
     public void OnEnable()
     {
-        v = new List<Vector3>(mesh.vertices);
+        mesh = GetComponent<MeshFilter>().sharedMesh;
+        v = new List<Vector3>();
         foreach (Vector3 v3 in mesh.vertices)
         {
             v.Add(transform.TransformPoint(v3));
-
         }
         Debug.Log("Info: Block awaked. ID is " + ID);
-       // Debug.Log("Now" + DateTime.Now);
+        // Debug.Log("Now" + DateTime.Now);
         var triangle = mesh.triangles;
+        Debug.Log("triangle.Length is " + triangle.Length);
         foreach (var x in triangle)
         {
-            //Debug.Log(x);
+            Debug.Log("triangle is " + x);
         }
         _leftPocketInsertingBlock = new List<Block>();
         _rightPocketInsertingBlock = new List<Block>();
-
+        _tmpVertices = new List<Vector3>();
     }
     /// <summary>
     /// �I�u�W�F�N�g�������_�����O����ۂɌĂ΂��֐�
@@ -84,9 +93,32 @@ public class Block : MonoBehaviour
         //  v.Clear();
         //Debug.Log("a");
         //this.transform.position += new Vector3(0.1f, 0, 0);
-        if (Input.GetKey(KeyCode.LeftArrow))
+        if (Input.GetKey(KeyCode.A))
         {
             this.transform.Translate(-0.1f, 0.0f, 0.0f);
+        }
+    }
+    public void OnSpaceKeyPress()
+    {
+        Debug.Log("On Space key is pressed");
+        foreach (var vertex in mesh.vertices)
+        {
+            _tmpVertices.Add(vertex);
+        }
+        _tmpVertices[0] = new Vector3(100, 0, 0);
+        mesh.SetVertices(_tmpVertices);
+        mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
+        mesh.RecalculateTangents();
+        _tmpVertices.Clear();
+        UpdateVertices();
+    }
+    void UpdateVertices()
+    {
+        v.Clear();
+        foreach (Vector3 v3 in mesh.vertices)
+        {
+            v.Add(transform.TransformPoint(v3));
         }
     }
 }
