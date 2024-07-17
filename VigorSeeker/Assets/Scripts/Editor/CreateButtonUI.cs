@@ -3,15 +3,41 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
+
 [InitializeOnLoad]
 public static class CreateButtonUi
 {
     public static int ID = 0;
     public static Block _block;
+    public static DefaultScene defaultScene;
     static CreateButtonUi()
     {
         SceneView.duringSceneGui += OnGui;
         SceneView.duringSceneGui += SceneViewOnDuringSceneGui;
+        defaultScene = new DefaultScene();
+        //ヒエラルキーで選択されたオブジェクトが変更されたときに呼び出される関数を登録
+        Selection.selectionChanged += () =>
+        {
+            if (defaultScene.selectedBlock == null 
+            && Selection.activeGameObject.GetComponent<Block>() != null)
+            {
+                Debug.Log("selectedBlock is not null");
+                defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
+            }
+            else if(defaultScene.selectedBlock != null  
+            && Selection.activeGameObject.GetComponent<Block>() != null)
+            {
+                Debug.Log("swapping selectedBlock and connectedBlock");
+                //旧選択対象を接続対象に設定
+                defaultScene.connectedBlock = defaultScene.selectedBlock;
+                defaultScene.connectedBlock = 
+                defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
+            }else if(Selection.activeGameObject.GetComponent<Block>() == null)
+            {
+                defaultScene.selectedBlock = null;
+                defaultScene.connectedBlock = null;
+            }
+        };
     }
 
     private static void OnGui(SceneView sceneView)
@@ -23,10 +49,17 @@ public static class CreateButtonUi
         //}
         // ������ UI��`�悷�鏈�����L�q
         ShowButtons(sceneView.position.size);
-
+        ShowInfoPanel();
         Handles.EndGUI();
     }
-
+    private static void ShowInfoPanel()
+    {
+        var rect = new Rect(10, 10, 200, 100);
+        GUI.Box(rect, "current info");
+        GUI.Label(new Rect(20, 30, 180, 20), "slecting block id: " + defaultScene.selectedBlock?.ID);
+        GUI.Label(new Rect(20, 50, 180, 20), "connected block id: " + defaultScene.connectedBlock?.ID);
+        GUI.Label(new Rect(20, 70, 180, 20), "�L�q�̏���");
+    }
     private static void SceneViewOnDuringSceneGui(SceneView obj)
     {
         var ev = Event.current;

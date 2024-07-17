@@ -33,8 +33,12 @@ public class Block : MonoBehaviour
     /// <summary>
     /// 右ポケットに足を挿入しているブロック
     /// </summary>
-
     [SerializeField] public List<Block> _rightPocketInsertingBlock;
+    /// <summary>
+    /// ブロックが他のブロックに対して接続可能か
+    /// </summary>
+    [SerializeField] public bool _isConnectable;
+
     public void OnEnable()
     {
         v = new List<Vector3>(mesh.vertices);
@@ -43,8 +47,8 @@ public class Block : MonoBehaviour
             v.Add(transform.TransformPoint(v3));
 
         }
-        Debug.Log("Info: Block awaked");
-        Debug.Log("Now" + DateTime.Now);
+        Debug.Log("Info: Block awaked. ID is " + ID);
+       // Debug.Log("Now" + DateTime.Now);
         var triangle = mesh.triangles;
         foreach (var x in triangle)
         {
