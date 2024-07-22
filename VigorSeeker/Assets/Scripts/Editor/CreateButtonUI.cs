@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Codice.Client.BaseCommands;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
@@ -14,6 +15,8 @@ public static class CreateButtonUi
     public static Block _block;
     public static List<Block> _blocks;
     public static DefaultScene defaultScene;
+    public static float _margin = 0.2f;
+    public static float blockVallaySize = 4.454382f - 4.378539f;
     static CreateButtonUi()
     {
         SceneView.duringSceneGui += OnGui;
@@ -60,12 +63,12 @@ public static class CreateButtonUi
     }
     private static void ShowInfoPanel()
     {
-        var rect = new Rect(10, 10, 200, 100);
+        var rect = new Rect(10, 10, 400, 100);
         GUI.Box(rect, "current info");
         GUI.Label(new Rect(20, 30, 180, 20), "slecting block id: " + defaultScene.selectedBlock?.ID);
         GUI.Label(new Rect(20, 50, 180, 20), "connected block id: " + defaultScene.connectedBlock?.ID);
         GUI.Label(new Rect(20, 70, 180, 20), "spring force" + defaultScene.selectedBlock?._massPoints[2].CalcForce());
-        GUI.Label(new Rect(20, 90, 180, 20), "spring force" + defaultScene.selectedBlock?._massPoints[2]._position);
+        GUI.Label(new Rect(20, 90, 180, 20), "Message " + defaultScene?.message);
 
     }
 
@@ -154,18 +157,81 @@ public static class CreateButtonUi
             if (GUI.Button(rect2, "ブロックに変換"))
             {
                 Debug.Log("convert to block");
-                Debug.Log("gameobjects length: " + Selection.gameObjects.Length);
-                var components = Selection.activeGameObject.GetComponents<Component>();
-                Debug.Log("components length: " + components.Length);
                 if (Selection.gameObjects.Length == 1
                 && Selection.activeGameObject.GetComponent<ProBuilderShape>() != null)
                 {
                     var shape = Selection.activeGameObject.GetComponents<ProBuilderShape>();
+                    var c_Transform = Selection.activeGameObject.transform;
                     Debug.Log("shape size: " + shape.Length);
                     foreach (var s in shape)
                     {
                         Debug.Log("component size: " + s.m_Size);
 
+                    }
+                    var row = GetRow(shape[0].m_Size);
+                    var column = GetColumn(shape[0].m_Size);
+                    if (row == -1 || column == -1)
+                    {
+                        Debug.Log("Error: row or column is not correct");
+                        defaultScene.message = "Error: row or column is not correct";
+                    }
+                    else
+                    {
+                        defaultScene.message = "row: " + row + " column: " + column;
+                        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/blockv1.prefab");
+                        var parent = new GameObject("parent");
+                        if (prefab != null)
+                        {
+                            for (int c = 0; c < column; c++)
+                            {
+                                for (int r = 0; r < row; r++)
+                                {
+                                    var obj = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                                    obj.transform.parent = parent.transform;
+                                    var vertices = CreateMeshVertices(ReadObjFile("block"));
+                                    var triangles = CreateTriangles(ReadObjFile("block"));
+                                    Selection.activeObject = obj;
+                                    obj.name = "block:ID " + ID;
+                                    Undo.RegisterCreatedObjectUndo(obj, "create object");
+                                    Debug.Log("Info: gameObject Added. ID is " + ID);
+                                    //blockプレハブにアタッチされているblock.csにアクセスする
+                                    var block = obj.GetComponent<Block>();
+                                    var meshfilter = obj.GetComponent<MeshFilter>();
+                                    var mesh = new Mesh();
+                                    mesh.SetVertices(vertices);
+                                    mesh.SetTriangles(triangles, 0);
+                                    //mesh.SetNormals();
+                                    meshfilter.mesh = mesh;
+                                    block.mesh = mesh;
+                                    block.SetVertices();
+                                    block.ID = ID;
+                                    ID++;
+                                    _blocks.Add(block);
+                                    block.TransformInsertionModel();
+                                    var radius = blockVallaySize * row * 2 / (2 * Mathf.PI);
+                                    if (radius >= 2.0)
+                                    {
+                                        radius = radius - 2.0f;
+                                    }
+                                    else
+                                    {
+                                        radius = 0.0f;
+                                    }
+                                    block.transform.position = new Vector3(c_Transform.position.x, c_Transform.position.y - shape[0].m_Size.y / 2 + c * _margin, c_Transform.position.z - radius);
+                                    if (c % 2 == 0)
+                                    {
+                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)row * (float)r);
+                                        //Debug.Log("rotate around " + 360 / row * r);
+                                    }
+                                    else
+                                    {
+                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)row * (float)r + 180.0f / (float)row);
+                                        Debug.Log("rotate around " + 360 / row * r);
+                                    }
+
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -222,6 +288,40 @@ public static class CreateButtonUi
             }
         }
         return triangles;
+    }
+
+    public static int GetRow(Vector3 size)
+    {
+        float blockVallaySize = 4.454382f - 4.378539f;
+        //2.0 is the size of the block
+        if (size.x <= 4.0)
+        {
+            return -1;
+        }
+        //真円と仮定して作成する
+        float circumference = size.x * Mathf.PI;
+        int row = (int)(circumference / blockVallaySize);
+        Debug.Log("row is " + row);
+        if (row % 2 == 1)
+        {
+            row++;
+        }
+        //row を半分にする
+        row = row / 2;
+        return row;
+    }
+    public static int GetColumn(Vector3 size)
+    {
+        //ブロックの背の高さ
+        float blockBackSize = 3.039667f - 1.119001f;
+        if (size.y <= blockBackSize)
+        {
+            return -1;
+        }
+        float height = size.y;
+        //+1は一番下のブロックの分
+        int column = (int)((height - blockBackSize) / _margin) + 1;
+        return column;
     }
 }
 

@@ -80,7 +80,7 @@ public class MassPoint : MonoBehaviour
         _acc = acc;
         //Debug.Log("acc: " + acc + " ID is " + _index);
         _velocity += (acc * dt);
-        _position = _position + _velocity * dt;
+        //_position = _position + _velocity * dt;
 
     }
 }
