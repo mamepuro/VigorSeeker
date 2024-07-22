@@ -29,7 +29,7 @@ public class Spring : MonoBehaviour
 
     void OnEnable()
     {
-        Debug.Log("Info: Spring awaked.");
+        //Debug.Log("Info: Spring awaked.");
         _massPointIndexes = new List<int>();
     }
     // Start is called before the first frame update
@@ -62,7 +62,7 @@ public class Spring : MonoBehaviour
         //左側の質点についての場合
         if (massPoint == _leftMassPoint)
         {
-            Debug.Log("left mass point");
+            //Debug.Log("left mass point");
             Vector3 r = _rightMassPoint._position - _leftMassPoint._position;
             Vector3 v = _rightMassPoint._velocity - _leftMassPoint._velocity;
             force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
@@ -85,7 +85,7 @@ public class Spring : MonoBehaviour
         // masspointが右側の質点の場合
         else
         {
-            Debug.Log("right mass point");
+            //Debug.Log("right mass point");
             Vector3 r = _leftMassPoint._position - _rightMassPoint._position;
             Vector3 v = _leftMassPoint._velocity - _rightMassPoint._velocity;
             force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;

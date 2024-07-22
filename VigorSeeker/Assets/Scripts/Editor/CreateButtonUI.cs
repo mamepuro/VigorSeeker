@@ -3,6 +3,8 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.ProBuilder;
+using UnityEngine.ProBuilder.Shapes;
 
 
 [InitializeOnLoad]
@@ -116,6 +118,11 @@ public static class CreateButtonUi
               sceneSize.y - 60,
               buttonSize,
               40);
+            var rect2 = new Rect(
+              sceneSize.x / 2 - buttonSize * (count) / 2 + buttonSize * (i + 1),
+              sceneSize.y - 60,
+              buttonSize,
+              40);
 
             if (GUI.Button(rect, "ブロックを追加"))
             {
@@ -143,6 +150,25 @@ public static class CreateButtonUi
                     ID++;
                     _blocks.Add(block);
                 }
+            }
+            if (GUI.Button(rect2, "ブロックに変換"))
+            {
+                Debug.Log("convert to block");
+                Debug.Log("gameobjects length: " + Selection.gameObjects.Length);
+                var components = Selection.activeGameObject.GetComponents<Component>();
+                Debug.Log("components length: " + components.Length);
+                if (Selection.gameObjects.Length == 1
+                && Selection.activeGameObject.GetComponent<ProBuilderShape>() != null)
+                {
+                    var shape = Selection.activeGameObject.GetComponents<ProBuilderShape>();
+                    Debug.Log("shape size: " + shape.Length);
+                    foreach (var s in shape)
+                    {
+                        Debug.Log("component size: " + s.m_Size);
+
+                    }
+                }
+
             }
         }
     }

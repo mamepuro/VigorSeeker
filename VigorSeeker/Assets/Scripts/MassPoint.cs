@@ -78,7 +78,7 @@ public class MassPoint : MonoBehaviour
         Vector3 acc = CalcForce() / _mass;
         _force = CalcForce();
         _acc = acc;
-        Debug.Log("acc: " + acc + " ID is " + _index);
+        //Debug.Log("acc: " + acc + " ID is " + _index);
         _velocity += (acc * dt);
         _position = _position + _velocity * dt;
 
