@@ -57,6 +57,7 @@ public class Block : MonoBehaviour
     const float _dampingConstant = 0;
     const float _springConstant = 10.0f;
     const float _restLength = 0.1f;
+    bool _isDebug = true;
     public void OnEnable()
     {
         // mesh = GetComponent<MeshFilter>().sharedMesh;
@@ -112,8 +113,42 @@ public class Block : MonoBehaviour
             {
                 v.Add(transform.TransformPoint(v3));
             }
-            Debug.Log("Info: Block awaked. ID is " + ID);
+            //Debug.Log("Info: Block awaked. ID is " + ID);
             Initiate();
+        }
+    }
+    /// <summary>
+    /// ブロックを挿入時のモデルに変換する
+    /// </summary>
+    public void TransformInsertionModel()
+    {
+        Debug.Log("TransformInsertionModel is called");
+        Debug.Log("On Space key is pressed");
+        int i = 0;
+        foreach (var vertex in mesh.vertices)
+        {
+            _tmpVertices[i] = vertex;
+            i++;
+        }
+        //testbending
+        _tmpVertices[2] = new Vector3(_tmpVertices[0].x, _tmpVertices[2].y, _tmpVertices[2].z);
+        _tmpVertices[5] = new Vector3(_tmpVertices[3].x, _tmpVertices[5].y, _tmpVertices[5].z);
+        mesh.SetVertices(_tmpVertices);
+        mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
+        mesh.RecalculateTangents();
+        if (_massPoints.Count != 0)
+        {
+            _massPoints[2]._position = new Vector3(_massPoints[0]._position.x, _massPoints[2]._position.y, _massPoints[2]._position.z);
+            _massPoints[5]._position = new Vector3(_massPoints[3]._position.x, _massPoints[5]._position.y, _massPoints[5]._position.z);
+            foreach (var spring in _springs)
+            {
+                //バネの張り直し
+                if (spring._massPointIndexes.Contains(2) && spring._massPointIndexes.Contains(5))
+                {
+                    spring._springLength = Vector3.Distance(_massPoints[2]._position, _massPoints[5]._position);
+                }
+            }
         }
     }
     public void OnSpaceKeyPress()
@@ -144,9 +179,9 @@ public class Block : MonoBehaviour
     }
     void UpdateVertices()
     {
-        if (_massPoints.Count == 0)
+        if (_massPoints.Count == 0 || _isDebug)
         {
-            Debug.Log("massPoints.Count is 0");
+            //Debug.Log("massPoints.Count is 0");
             v.Clear();
             foreach (Vector3 v3 in mesh.vertices)
             {
@@ -181,14 +216,9 @@ public class Block : MonoBehaviour
             massPoint.SetMassSpring(30.0f, Vector3.zero, i, v[i], this);
             _massPoints.Add(massPoint);
         }
-        Debug.Log("initialSpringIndex.Length is " + _initialSpringIndex.Length);
         for (int i = 0; i < _initialSpringIndex.GetLength(0); i++)
         {
             var spring = gameObject.AddComponent<Spring>();
-            Debug.Log("i is " + i);
-            Debug.Log("massPoints.Count is " + _massPoints.Count);
-            Debug.Log("initialSpringIndex[i, 0] is " + _initialSpringIndex[i, 0]);
-            Debug.Log("initialSpringIndex[i, 1] is " + _initialSpringIndex[i, 1]);
             var massPoint1 = _massPoints[_initialSpringIndex[i, 0]];
             var massPoint2 = _massPoints[_initialSpringIndex[i, 1]];
             //TODO: distanceは遅いのでmagintudeを使う
@@ -199,8 +229,6 @@ public class Block : MonoBehaviour
             massPoint1.AddSpring(spring);
             massPoint2.AddSpring(spring);
         }
-        Debug.Log("legSpring.Length is " + _legSpring.Length);
-        Debug.Log("massPoints.Count is " + _legSpring[0, 0]);
         for (int i = 0; i < _legSpring.GetLength(0); i++)
         {
             var spring = gameObject.AddComponent<Spring>();

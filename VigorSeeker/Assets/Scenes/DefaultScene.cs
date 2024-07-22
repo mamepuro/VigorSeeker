@@ -13,6 +13,7 @@ public class DefaultScene : MonoBehaviour
     /// 接続対象のブロック
     /// </summary>
     public Block connectedBlock;
+    public string message;
     // Start is called before the first frame update
     void Start()
     {
