@@ -62,7 +62,9 @@ public static class CreateButtonUi
         GUI.Box(rect, "current info");
         GUI.Label(new Rect(20, 30, 180, 20), "slecting block id: " + defaultScene.selectedBlock?.ID);
         GUI.Label(new Rect(20, 50, 180, 20), "connected block id: " + defaultScene.connectedBlock?.ID);
-        GUI.Label(new Rect(20, 70, 180, 20), "�L�q�̏���");
+        GUI.Label(new Rect(20, 70, 180, 20), "spring force" + defaultScene.selectedBlock?._massPoints[2].CalcForce());
+        GUI.Label(new Rect(20, 90, 180, 20), "spring force" + defaultScene.selectedBlock?._massPoints[2]._position);
+
     }
 
     /// <summary>
@@ -75,7 +77,6 @@ public static class CreateButtonUi
         var ev = Event.current;
         if (ev.type == EventType.KeyDown)
         {
-            Debug.Log(ev.keyCode);
             if (ev.keyCode == KeyCode.Space)
             {
                 Debug.Log("Space key is pressed");
@@ -83,11 +84,17 @@ public static class CreateButtonUi
                 {
                     Debug.Log("[foreach] block id: " + block.ID);
                     block.OnSpaceKeyPress();
-                    foreach (var vertices in block.mesh.vertices)
-                    {
-                        Debug.Log("vertices: " + vertices);
-                    }
                 }
+            }
+            if (ev.keyCode == KeyCode.LeftArrow)
+            {
+                Debug.Log("Left arrow key is pressed");
+                foreach (var block in _blocks)
+                {
+                    Debug.Log("[foreach] block id: " + block.ID);
+                    block.OnLeftKeyPress();
+                }
+
             }
         }
     }
@@ -112,26 +119,84 @@ public static class CreateButtonUi
 
             if (GUI.Button(rect, "ブロックを追加"))
             {
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/block.prefab");
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/blockv1.prefab");
                 if (prefab != null)
                 {
                     var obj = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                    var vertices = CreateMeshVertices(ReadObjFile("block"));
+                    var triangles = CreateTriangles(ReadObjFile("block"));
                     Selection.activeObject = obj;
                     obj.name = "block:ID " + ID;
                     Undo.RegisterCreatedObjectUndo(obj, "create object");
                     Debug.Log("Info: gameObject Added. ID is " + ID);
                     //blockプレハブにアタッチされているblock.csにアクセスする
                     var block = obj.GetComponent<Block>();
+                    var meshfilter = obj.GetComponent<MeshFilter>();
+                    var mesh = new Mesh();
+                    mesh.SetVertices(vertices);
+                    mesh.SetTriangles(triangles, 0);
+                    //mesh.SetNormals();
+                    meshfilter.mesh = mesh;
+                    block.mesh = mesh;
+                    block.SetVertices();
                     block.ID = ID;
                     ID++;
                     _blocks.Add(block);
                 }
-                //var pre = AssetDatabase.LoadAssetAtPath<GameObject>("");
-                Debug.Log("押された");
             }
         }
     }
+    public static string[] ReadObjFile(string fileName)
+    {
+        string texts = (Resources.Load(fileName, typeof(TextAsset)) as TextAsset).text;
+        string[] lines = texts.Split('\n');
+        return lines;
+    }
+    public static List<Vector3> CreateMeshVertices(string[] lines)
+    {
+        var vertices = new List<Vector3>();
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("v"))
+            {
+                var v = line.Split(' ');
+                if (v[0] == "v")
+                {
+                    vertices.Add(new Vector3(float.Parse(v[1]), float.Parse(v[2]), float.Parse(v[3])));
+                }
+            }
+        }
 
+        return vertices;
+    }
+    /// <summary>
+    /// 三角形のインデックスを格納する
+    /// </summary>
+    /// <param name="lines">objファイルの中身</param>
+    /// <returns>三角形インデックスのリスト</returns>
+    public static List<int> CreateTriangles(string[] lines)
+    {
+        var triangles = new List<int>();
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("f"))
+            {
+                var f = line.Split(' ');
+                if (f[0] == "f" && f.Length == 4)
+                {
+                    var f1 = f[1].Split('/');
+                    var f2 = f[2].Split('/');
+                    var f3 = f[3].Split('/');
+                    //unityの仕様上、triangleのインデックスを時計周りで格納する必要がある
+                    //objファイルは反時計回りでインデックスが格納される
+                    triangles.Add(int.Parse(f3[0]) - 1);
+                    triangles.Add(int.Parse(f2[0]) - 1);
+                    triangles.Add(int.Parse(f1[0]) - 1);
+                }
+            }
+        }
+        return triangles;
+    }
 }
 
 //private static Block LoadDataTable()
