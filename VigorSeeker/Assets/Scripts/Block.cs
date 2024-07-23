@@ -5,6 +5,7 @@ using System;
 //using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.AI;
+using System.Collections.Specialized;
 
 [ExecuteAlways]
 public class Block : MonoBehaviour
@@ -241,5 +242,39 @@ public class Block : MonoBehaviour
             massPoint1.AddSpring(spring);
             massPoint2.AddSpring(spring);
         }
+    }
+    public void UpdateValleySize(float diff)
+    {
+        int i = 0;
+        foreach (var vertex in mesh.vertices)
+        {
+            _tmpVertices[i] = vertex;
+            i++;
+        }
+        //testbending
+        var extra = diff / 2;
+        _tmpVertices[0] = new Vector3(_tmpVertices[0].x - extra, _tmpVertices[0].y, _tmpVertices[0].z);
+        _massPoints[0]._position = new Vector3(_massPoints[0]._position.x - extra, _massPoints[0]._position.y, _massPoints[0]._position.z);
+        _tmpVertices[1] = new Vector3(_tmpVertices[1].x - extra, _tmpVertices[1].y, _tmpVertices[1].z);
+        _massPoints[1]._position = new Vector3(_massPoints[1]._position.x - extra, _massPoints[1]._position.y, _massPoints[1]._position.z);
+        _tmpVertices[2] = new Vector3(_tmpVertices[2].x - extra, _tmpVertices[2].y, _tmpVertices[2].z);
+        _massPoints[2]._position = new Vector3(_massPoints[2]._position.x - extra, _massPoints[2]._position.y, _massPoints[2]._position.z);
+        _tmpVertices[3] = new Vector3(_tmpVertices[3].x + extra, _tmpVertices[3].y, _tmpVertices[3].z);
+        _massPoints[3]._position = new Vector3(_massPoints[3]._position.x + extra, _massPoints[3]._position.y, _massPoints[3]._position.z);
+        _tmpVertices[4] = new Vector3(_tmpVertices[4].x + extra, _tmpVertices[4].y, _tmpVertices[4].z);
+        _massPoints[4]._position = new Vector3(_massPoints[4]._position.x + extra, _massPoints[4]._position.y, _massPoints[4]._position.z);
+        _tmpVertices[5] = new Vector3(_tmpVertices[5].x + extra, _tmpVertices[5].y, _tmpVertices[5].z);
+        _massPoints[5]._position = new Vector3(_massPoints[5]._position.x + extra, _massPoints[5]._position.y, _massPoints[5]._position.z);
+        mesh.SetVertices(_tmpVertices);
+        mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
+        mesh.RecalculateTangents();
+        foreach (var spring in _springs)
+        {
+            //バネの張り直し
+            spring._springLength = Vector3.Distance(_massPoints[spring._massPointIndexes[0]]._position, _massPoints[spring._massPointIndexes[1]]._position);
+        }
+        //Debug.Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        //UpdateVertices();
     }
 }

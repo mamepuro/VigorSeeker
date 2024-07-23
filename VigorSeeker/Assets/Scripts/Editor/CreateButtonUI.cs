@@ -1,11 +1,17 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using System.Runtime.Remoting;
 using Codice.Client.BaseCommands;
+using Codice.CM.Common;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.ProBuilder;
 using UnityEngine.ProBuilder.Shapes;
+using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
 
 
 [InitializeOnLoad]
@@ -29,13 +35,13 @@ public static class CreateButtonUi
             if (defaultScene.selectedBlock == null
             && Selection.activeGameObject.GetComponent<Block>() != null)
             {
-                Debug.Log("selectedBlock is not null");
+                //Debug.Log("selectedBlock is not null");
                 defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
             }
             else if (defaultScene.selectedBlock != null
             && Selection.activeGameObject.GetComponent<Block>() != null)
             {
-                Debug.Log("swapping selectedBlock and connectedBlock");
+                //Debug.Log("swapping selectedBlock and connectedBlock");
                 //旧選択対象を接続対象に設定
                 defaultScene.connectedBlock = defaultScene.selectedBlock;
                 defaultScene.connectedBlock =
@@ -181,8 +187,7 @@ public static class CreateButtonUi
                         defaultScene.message = "row: " + row + " column: " + column;
                         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/blockv1.prefab");
                         var parent = new GameObject("parent");
-                        var scale = AdjustScale(shape[0].m_Size, ref column);
-                        Debug.Log("scale is " + scale);
+                        //var scale = AdjustScale(shape[0].m_Size, ref column);
                         if (prefab != null)
                         {
                             for (int c = 0; c < column; c++)
@@ -210,8 +215,9 @@ public static class CreateButtonUi
                                     block.ID = ID;
                                     ID++;
                                     _blocks.Add(block);
+                                    var size = ChangeBlockVallySize(shape[0].m_Size, block);
                                     block.TransformInsertionModel();
-                                    var radius = blockVallaySize * row * 2 / (2 * Mathf.PI);
+                                    var radius = size * rowSize * 2 / (2 * Mathf.PI);
                                     if (radius >= 2.0)
                                     {
                                         radius = radius - 2.0f;
@@ -220,16 +226,15 @@ public static class CreateButtonUi
                                     {
                                         radius = 0.0f;
                                     }
-                                    block.transform.position = new Vector3(c_Transform.position.x, c_Transform.position.y - shape[0].m_Size.y / 2 + c * _margin, c_Transform.position.z - radius);
-                                    block.transform.localScale = new Vector3(scale, scale, scale);
+                                    block.transform.position = new Vector3(c_Transform.position.x, c_Transform.position.y - shape[0].m_Size.y / 2 + c * _margin, c_Transform.position.z + radius);
                                     if (c % 2 == 0)
                                     {
-                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)row * (float)r);
+                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r);
                                         //Debug.Log("rotate around " + 360 / row * r);
                                     }
                                     else
                                     {
-                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)row * (float)r + 180.0f / (float)row);
+                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r + 180.0f / (float)rowSize);
                                         Debug.Log("rotate around " + 360 / row * r);
                                     }
 
@@ -329,7 +334,7 @@ public static class CreateButtonUi
     }
 
     /// <summary>
-    /// ブロックのスケールを調整する
+    /// ブロックのスケールを調整する(案1)
     /// </summary>
     /// <param name="size">サイズ</param>
     /// <param name="column">カラム</param>
@@ -337,16 +342,36 @@ public static class CreateButtonUi
     public static float AdjustScale(Vector3 cylinderSize, ref int column)
     {
         Debug.Log("init column is " + column);
-        float size = (cylinderSize.x * Mathf.PI) / (rowSize * 2 * blockVallaySize);
+        float size = (cylinderSize.x * Mathf.PI / (rowSize * 2));
+        Debug.Log("size is " + size + "blockVallaySize is " + blockVallaySize);
+        size = size / blockVallaySize;
         float height = cylinderSize.y;
-        float blockBackSize = (3.039667f - 1.119001f) * size;
-        if(height <= blockBackSize)
+        float blockBackSize = (3.039667f - 1.119001f);
+        if (height <= blockBackSize)
         {
             return -1;
         }
         column = (int)((height - size) / _margin) + 1;
         Debug.Log("after column is " + column);
         Debug.Log("size is " + size);
+        return size;
+    }
+
+    public static float ChangeBlockVallySize(Vector3 cylinderSize, Block block)
+    {
+        float size = (cylinderSize.x * Mathf.PI / (rowSize * 2));
+        Debug.Log("size is " + size + "blockVallaySize is " + blockVallaySize); ;
+        Debug.Log("after size is " + size + "blockVallaySize is " + blockVallaySize);
+        if (size >= 0.5)
+        {
+            Debug.Log("!!!!!!!!!!CAUTION!!!!!!!!!! size is too big");
+        }
+        float diff = size - blockVallaySize;
+        if (diff > 0.0)
+        {
+        }
+        Debug.Log("diff is " + diff);
+        block.UpdateValleySize(diff);
         return size;
     }
 }
