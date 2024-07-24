@@ -807,3 +807,11 @@ AssetImportParameters requested are different than current active one (requested
   custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
   custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
   custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+========================================================================
+Received Import Request.
+  Time since last request: 63199.229879 seconds.
+  path: Assets/Scripts/Editor/CreateButtonUI.cs
+  artifactKey: Guid(2e3b6801085ec3c4e9441f8fcdbbda3f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Scripts/Editor/CreateButtonUI.cs using Guid(2e3b6801085ec3c4e9441f8fcdbbda3f) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'cd7d032314573e56b0488e4e5c3c548e') in 0.111542 seconds
+Number of updated asset objects reloaded before import = 0
+Number of asset objects unloaded after import = 0
