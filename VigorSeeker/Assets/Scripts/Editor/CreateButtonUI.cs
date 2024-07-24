@@ -17,6 +17,7 @@ public static class CreateButtonUi
     public static DefaultScene defaultScene;
     public static float _margin = 0.2f;
     public static float blockVallaySize = 4.454382f - 4.378539f;
+    public static int rowSize = 35;
     static CreateButtonUi()
     {
         SceneView.duringSceneGui += OnGui;
@@ -180,11 +181,13 @@ public static class CreateButtonUi
                         defaultScene.message = "row: " + row + " column: " + column;
                         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/blockv1.prefab");
                         var parent = new GameObject("parent");
+                        var scale = AdjustScale(shape[0].m_Size, ref column);
+                        Debug.Log("scale is " + scale);
                         if (prefab != null)
                         {
                             for (int c = 0; c < column; c++)
                             {
-                                for (int r = 0; r < row; r++)
+                                for (int r = 0; r < rowSize; r++)
                                 {
                                     var obj = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
                                     obj.transform.parent = parent.transform;
@@ -218,6 +221,7 @@ public static class CreateButtonUi
                                         radius = 0.0f;
                                     }
                                     block.transform.position = new Vector3(c_Transform.position.x, c_Transform.position.y - shape[0].m_Size.y / 2 + c * _margin, c_Transform.position.z - radius);
+                                    block.transform.localScale = new Vector3(scale, scale, scale);
                                     if (c % 2 == 0)
                                     {
                                         block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)row * (float)r);
@@ -301,7 +305,7 @@ public static class CreateButtonUi
         //真円と仮定して作成する
         float circumference = size.x * Mathf.PI;
         int row = (int)(circumference / blockVallaySize);
-        Debug.Log("row is " + row);
+        //Debug.Log("row is " + row);
         if (row % 2 == 1)
         {
             row++;
@@ -322,6 +326,28 @@ public static class CreateButtonUi
         //+1は一番下のブロックの分
         int column = (int)((height - blockBackSize) / _margin) + 1;
         return column;
+    }
+
+    /// <summary>
+    /// ブロックのスケールを調整する
+    /// </summary>
+    /// <param name="size">サイズ</param>
+    /// <param name="column">カラム</param>
+    /// <returns></returns>
+    public static float AdjustScale(Vector3 cylinderSize, ref int column)
+    {
+        Debug.Log("init column is " + column);
+        float size = (cylinderSize.x * Mathf.PI) / (rowSize * 2 * blockVallaySize);
+        float height = cylinderSize.y;
+        float blockBackSize = (3.039667f - 1.119001f) * size;
+        if(height <= blockBackSize)
+        {
+            return -1;
+        }
+        column = (int)((height - size) / _margin) + 1;
+        Debug.Log("after column is " + column);
+        Debug.Log("size is " + size);
+        return size;
     }
 }
 
