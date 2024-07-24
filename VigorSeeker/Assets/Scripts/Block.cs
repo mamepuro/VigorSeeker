@@ -17,7 +17,7 @@ public class Block : MonoBehaviour
     /// 新しく頂点を追加するための一時的な頂点リスト
     /// </summary>
     [SerializeField] Vector3[] _tmpVertices;
-    [SerializeField] List<Spring> _springs;
+    [SerializeField] public List<Spring> _springs;
     [SerializeField] public List<MassPoint> _massPoints;
     [SerializeField] public bool _isFixed = true;
     /// <summary>
@@ -225,7 +225,7 @@ public class Block : MonoBehaviour
             //TODO: distanceは遅いのでmagintudeを使う
             var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
             spring.SetSpring(massPoint1, massPoint2,
-            10.0f, springLength: initialLength, 20.0f, 1.0f);
+            10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Leg);
             _springs.Add(spring);
             massPoint1.AddSpring(spring);
             massPoint2.AddSpring(spring);
@@ -237,7 +237,7 @@ public class Block : MonoBehaviour
             var massPoint2 = _massPoints[_legSpring[i, 1]];
             var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
             spring.SetSpring(massPoint1, massPoint2,
-            10.0f, springLength: initialLength, 20.0f, 1.0f);
+            10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Leg);
             _springs.Add(spring);
             massPoint1.AddSpring(spring);
             massPoint2.AddSpring(spring);

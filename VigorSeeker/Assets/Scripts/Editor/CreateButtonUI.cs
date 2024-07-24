@@ -24,6 +24,7 @@ public static class CreateButtonUi
     public static float _margin = 0.2f;
     public static float blockVallaySize = 4.454382f - 4.378539f;
     public static int rowSize = 35;
+    public static bool isDebug = true;
     static CreateButtonUi()
     {
         SceneView.duringSceneGui += OnGui;
@@ -32,10 +33,20 @@ public static class CreateButtonUi
         //ヒエラルキーで選択されたオブジェクトが変更されたときに呼び出される関数を登録
         Selection.selectionChanged += () =>
         {
+            Debug.Log("selection changed");
+            if (Selection.activeGameObject != null)
+            {
+                var x = Selection.activeGameObject.GetComponent<Transform>();
+                Debug.Log("child count is " + x.childCount);
+
+            }
+
+
             if (defaultScene.selectedBlock == null
             && Selection.activeGameObject.GetComponent<Block>() != null)
             {
-                //Debug.Log("selectedBlock is not null");
+                Debug.Log("selectedBlock is not null");
+                Debug.Log("selection.activeGameObject is " + Selection.gameObjects.Length);
                 defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
             }
             else if (defaultScene.selectedBlock != null
@@ -70,11 +81,12 @@ public static class CreateButtonUi
     }
     private static void ShowInfoPanel()
     {
-        var rect = new Rect(10, 10, 400, 100);
+        var rect = new Rect(10, 10, 400, 120);
         GUI.Box(rect, "current info");
         GUI.Label(new Rect(20, 30, 180, 20), "slecting block id: " + defaultScene.selectedBlock?.ID);
         GUI.Label(new Rect(20, 50, 180, 20), "connected block id: " + defaultScene.connectedBlock?.ID);
         GUI.Label(new Rect(20, 70, 180, 20), "spring force" + defaultScene.selectedBlock?._massPoints[2].CalcForce());
+        GUI.Label(new Rect(20, 90, 180, 20), "Message " + defaultScene?.message);
         GUI.Label(new Rect(20, 90, 180, 20), "Message " + defaultScene?.message);
 
     }
@@ -152,6 +164,7 @@ public static class CreateButtonUi
                     var mesh = new Mesh();
                     mesh.SetVertices(vertices);
                     mesh.SetTriangles(triangles, 0);
+                    mesh.RecalculateNormals();
                     //mesh.SetNormals();
                     meshfilter.mesh = mesh;
                     block.mesh = mesh;
@@ -237,7 +250,65 @@ public static class CreateButtonUi
                                         block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r + 180.0f / (float)rowSize);
                                         Debug.Log("rotate around " + 360 / row * r);
                                     }
-
+                                    if (!isDebug)
+                                    {
+                                        if (c != 0)
+                                        {
+                                            //ブロックに差し込む
+                                            if (c % 2 == 0)
+                                            {
+                                                int myIndex = ID - 1;
+                                                var rightPocket = _blocks[myIndex - rowSize];
+                                                var leftIndex = myIndex - rowSize - 1;
+                                                if (r == 0)
+                                                {
+                                                    leftIndex = myIndex - 1;
+                                                }
+                                                var leftPocket = _blocks[leftIndex];
+                                                block._rightPocketInsertingBlock.Add(rightPocket);
+                                                block._leftPocketInsertingBlock.Add(leftPocket);
+                                                var spring = obj.AddComponent<Spring>();
+                                                var spring2 = obj.AddComponent<Spring>();
+                                                var massPoint1 = block._massPoints[2];
+                                                var massPoint2 = leftPocket._massPoints[2];
+                                                //TODO: distanceは遅いのでmagintudeを使う
+                                                var initialLength1 = Vector3.Distance(massPoint1._position, massPoint2._position);
+                                                spring.SetSpring(massPoint1, massPoint2,
+                                                10.0f, springLength: initialLength1, 20.0f, 1.0f, springType: SpringType.Block);
+                                                block._springs.Add(spring);
+                                                massPoint1.AddSpring(spring);
+                                                massPoint2.AddSpring(spring);
+                                                //TODO: springsの追加は本当にこれでOKか？
+                                            }
+                                            //ブロックに差し込む
+                                            if (c % 2 == 1)
+                                            {
+                                                int myIndex = ID - 1;
+                                                var rightIndex = myIndex - rowSize + 1;
+                                                var leftIndex = myIndex - rowSize;
+                                                if (r == rowSize - 1)
+                                                {
+                                                    rightIndex = myIndex - rowSize - rowSize + 1;
+                                                }
+                                                var leftPocket = _blocks[leftIndex];
+                                                var rightPocket = _blocks[rightIndex];
+                                                block._rightPocketInsertingBlock.Add(rightPocket);
+                                                block._leftPocketInsertingBlock.Add(leftPocket);
+                                                var spring = obj.AddComponent<Spring>();
+                                                var spring2 = obj.AddComponent<Spring>();
+                                                var massPoint1 = block._massPoints[5];
+                                                var massPoint2 = leftPocket._massPoints[5];
+                                                //TODO: distanceは遅いのでmagintudeを使う
+                                                var initialLength1 = Vector3.Distance(massPoint1._position, massPoint2._position);
+                                                spring.SetSpring(massPoint1, massPoint2,
+                                                10.0f, springLength: initialLength1, 20.0f, 1.0f, springType: SpringType.Block);
+                                                block._springs.Add(spring);
+                                                massPoint1.AddSpring(spring);
+                                                massPoint2.AddSpring(spring);
+                                                //TODO: springsの追加は本当にこれでOKか？
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

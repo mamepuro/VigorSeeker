@@ -18,6 +18,9 @@ public class MassPoint : MonoBehaviour
     [SerializeField] public Vector3 _position;
     [SerializeField] public Vector3 _force;
     [SerializeField] public Vector3 _acc;
+    /// <summary>
+    /// 質点の固定フラグ
+    /// </summary>
     [SerializeField] public bool _isFixed = false;
     /// <summary>
     /// この質点に接続されているばね
@@ -74,13 +77,16 @@ public class MassPoint : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        float dt = 0.01f;
-        Vector3 acc = CalcForce() / _mass;
-        _force = CalcForce();
-        _acc = acc;
-        //Debug.Log("acc: " + acc + " ID is " + _index);
-        _velocity += (acc * dt);
-        //_position = _position + _velocity * dt;
+        if (!block._isFixed)
+        {
+            float dt = 0.01f;
+            Vector3 acc = CalcForce() / _mass;
+            _force = CalcForce();
+            _acc = acc;
+            //Debug.Log("acc: " + acc + " ID is " + _index);
+            _velocity += (acc * dt);
+            _position = _position + _velocity * dt;
+        }
 
     }
 }
