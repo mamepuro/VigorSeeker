@@ -74,13 +74,17 @@ public class MassPoint : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        float dt = 0.01f;
-        Vector3 acc = CalcForce() / _mass;
-        _force = CalcForce();
-        _acc = acc;
-        //Debug.Log("acc: " + acc + " ID is " + _index);
-        _velocity += (acc * dt);
-        //_position = _position + _velocity * dt;
+        if (!block._isFixed)
+        {
+            float dt = 0.01f;
+            Vector3 acc = CalcForce() / _mass;
+            _force = CalcForce();
+            _acc = acc;
+            //Debug.Log("acc: " + acc + " ID is " + _index);
+            _velocity += (acc * dt);
+            _position = _position + _velocity * dt;
+        }
+
 
     }
 }

@@ -31,20 +31,28 @@ public static class CreateButtonUi
             {
                 Debug.Log("selectedBlock is not null");
                 defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
+                defaultScene.connectedBlock._isFixed = true;
             }
             else if (defaultScene.selectedBlock != null
             && Selection.activeGameObject.GetComponent<Block>() != null)
             {
                 Debug.Log("swapping selectedBlock and connectedBlock");
+                if (defaultScene.connectedBlock != null)
+                {
+                    defaultScene.connectedBlock._isFixed = false;
+                }
                 //旧選択対象を接続対象に設定
                 defaultScene.connectedBlock = defaultScene.selectedBlock;
-                defaultScene.connectedBlock =
                 defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
+                defaultScene.selectedBlock._isFixed = true;
+
             }
-            else if (Selection.activeGameObject.GetComponent<Block>() == null)
+            else if (Selection.gameObjects.Length == 0)
             {
                 defaultScene.selectedBlock = null;
                 defaultScene.connectedBlock = null;
+                defaultScene.selectedBlock._isFixed = false;
+                defaultScene.connectedBlock._isFixed = false;
             }
         };
         _blocks = new List<Block>();
@@ -69,7 +77,7 @@ public static class CreateButtonUi
         GUI.Label(new Rect(20, 30, 180, 20), "slecting block id: " + defaultScene.selectedBlock?.ID);
         GUI.Label(new Rect(20, 50, 180, 20), "connected block id: " + defaultScene.connectedBlock?.ID);
         GUI.Label(new Rect(20, 70, 180, 20), "spring force" + defaultScene.selectedBlock?._massPoints[2].CalcForce());
-        GUI.Label(new Rect(20, 90, 180, 20), "Message " + defaultScene?.message);
+        GUI.Label(new Rect(20, 90, 180, 20), "Message " + defaultScene?.isVisible);
 
     }
 
@@ -127,6 +135,11 @@ public static class CreateButtonUi
               sceneSize.y - 60,
               buttonSize,
               40);
+            var rect3 = new Rect(
+                sceneSize.x / 2 - buttonSize * (count) / 2 + buttonSize * (i + 2),
+                sceneSize.y - 60,
+                buttonSize,
+                40);
 
             if (GUI.Button(rect, "ブロックを追加"))
             {
@@ -151,6 +164,7 @@ public static class CreateButtonUi
                     block.mesh = mesh;
                     block.SetVertices();
                     block.ID = ID;
+                    block.defaultScene = defaultScene;
                     ID++;
                     _blocks.Add(block);
                 }
@@ -208,10 +222,11 @@ public static class CreateButtonUi
                                     block.mesh = mesh;
                                     block.SetVertices();
                                     block.ID = ID;
+                                    block.defaultScene = defaultScene;
                                     ID++;
                                     _blocks.Add(block);
                                     block.TransformInsertionModel();
-                                    var radius = blockVallaySize * row * 2 / (2 * Mathf.PI);
+                                    var radius = blockVallaySize * rowSize * 2 / (2 * Mathf.PI);
                                     if (radius >= 2.0)
                                     {
                                         radius = radius - 2.0f;
@@ -224,13 +239,13 @@ public static class CreateButtonUi
                                     block.transform.localScale = new Vector3(scale, scale, scale);
                                     if (c % 2 == 0)
                                     {
-                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)row * (float)r);
+                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r);
                                         //Debug.Log("rotate around " + 360 / row * r);
                                     }
                                     else
                                     {
-                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)row * (float)r + 180.0f / (float)row);
-                                        Debug.Log("rotate around " + 360 / row * r);
+                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r + 180.0f / (float)rowSize);
+                                        Debug.Log("rotate around " + 360 / rowSize * r);
                                     }
 
                                 }
@@ -239,6 +254,10 @@ public static class CreateButtonUi
                     }
                 }
 
+            }
+            if (GUI.Button(rect3, "Spring"))
+            {
+                defaultScene.isVisible = !defaultScene.isVisible;
             }
         }
     }
@@ -340,7 +359,7 @@ public static class CreateButtonUi
         float size = (cylinderSize.x * Mathf.PI) / (rowSize * 2 * blockVallaySize);
         float height = cylinderSize.y;
         float blockBackSize = (3.039667f - 1.119001f) * size;
-        if(height <= blockBackSize)
+        if (height <= blockBackSize)
         {
             return -1;
         }

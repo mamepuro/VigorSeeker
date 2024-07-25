@@ -22,6 +22,8 @@ public class Block : MonoBehaviour
     /// <summary>
     /// シーンマネージャーへの参照
     /// </summary>
+    [SerializeField]
+    public
     DefaultScene defaultScene;
     const int _leftLegIndex = 2;
     const int _rightLegIndex = 5;
@@ -89,6 +91,18 @@ public class Block : MonoBehaviour
 
             EditorApplication.QueuePlayerLoopUpdate();
             SceneView.RepaintAll();
+
+        }
+    }
+    void OnDrawGizmos()
+    {
+        if (defaultScene.isVisible)
+        {
+            foreach (var spring in _springs)
+            {
+                Gizmos.color = Color.blue;
+                Gizmos.DrawLine(spring._leftMassPoint._position, spring._rightMassPoint._position);
+            }
 
         }
     }
@@ -202,6 +216,11 @@ public class Block : MonoBehaviour
             mesh.RecalculateNormals();
             mesh.RecalculateTangents();
         }
+
+    }
+
+    void ReInitiate(bool isSpring)
+    {
 
     }
     void Initiate()
