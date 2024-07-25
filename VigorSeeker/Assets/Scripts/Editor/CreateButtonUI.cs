@@ -23,8 +23,11 @@ public static class CreateButtonUi
     public static DefaultScene defaultScene;
     public static float _margin = 0.2f;
     public static float blockVallaySize = 4.454382f - 4.378539f;
+
+    public static float margin = 4.378539f - 3.99421f;
     public static int rowSize = 35;
     public static bool isDebug = true;
+
     static CreateButtonUi()
     {
         SceneView.duringSceneGui += OnGui;
@@ -34,6 +37,7 @@ public static class CreateButtonUi
         Selection.selectionChanged += () =>
         {
             Debug.Log("selection changed");
+            Debug.Log("selection.activeGameObject is " + Selection.gameObjects.Length);
             if (Selection.activeGameObject != null)
             {
                 var x = Selection.activeGameObject.GetComponent<Transform>();
@@ -43,25 +47,44 @@ public static class CreateButtonUi
 
 
             if (defaultScene.selectedBlock == null
-            && Selection.activeGameObject.GetComponent<Block>() != null)
+            && Selection.activeGameObject != null)
             {
-                Debug.Log("selectedBlock is not null");
-                Debug.Log("selection.activeGameObject is " + Selection.gameObjects.Length);
-                defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
+                if (Selection.activeGameObject.GetComponent<Block>() != null)
+                {
+                    Debug.Log("selectedBlock is not null");
+                    Debug.Log("selection.activeGameObject is " + Selection.gameObjects.Length);
+                    defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
+                    if (defaultScene.connectedBlock != null)
+                    {
+                        defaultScene.connectedBlock._isAnimatable = true;
+                    }
+                    defaultScene.selectedBlock._isAnimatable = false;
+                }
+
             }
-            else if (defaultScene.selectedBlock != null
-            && Selection.activeGameObject.GetComponent<Block>() != null)
+            else if (defaultScene.selectedBlock != null && Selection.activeGameObject != null)
             {
-                //Debug.Log("swapping selectedBlock and connectedBlock");
-                //旧選択対象を接続対象に設定
-                defaultScene.connectedBlock = defaultScene.selectedBlock;
-                defaultScene.connectedBlock =
-                defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
+                if (Selection.activeObject.GetComponent<Block>() != null)
+                {
+                    //Debug.Log("swapping selectedBlock and connectedBlock");
+                    //旧選択対象を接続対象に設定
+                    if (defaultScene.connectedBlock != null)
+                    {
+                        defaultScene.connectedBlock._isAnimatable = true;
+                    }
+                    defaultScene.connectedBlock = defaultScene.selectedBlock;
+                    defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
+                    defaultScene.selectedBlock._isAnimatable = false;
+                }
             }
-            else if (Selection.activeGameObject.GetComponent<Block>() == null)
+            else if (Selection.gameObjects.Length == 0)
             {
+                Debug.Log("Yes");
+                defaultScene.selectedBlock._isAnimatable = true;
+                defaultScene.connectedBlock._isAnimatable = true;
                 defaultScene.selectedBlock = null;
                 defaultScene.connectedBlock = null;
+
             }
         };
         _blocks = new List<Block>();
@@ -85,9 +108,8 @@ public static class CreateButtonUi
         GUI.Box(rect, "current info");
         GUI.Label(new Rect(20, 30, 180, 20), "slecting block id: " + defaultScene.selectedBlock?.ID);
         GUI.Label(new Rect(20, 50, 180, 20), "connected block id: " + defaultScene.connectedBlock?.ID);
-        GUI.Label(new Rect(20, 70, 180, 20), "spring force" + defaultScene.selectedBlock?._massPoints[2].CalcForce());
-        GUI.Label(new Rect(20, 90, 180, 20), "Message " + defaultScene?.message);
-        GUI.Label(new Rect(20, 90, 180, 20), "Message " + defaultScene?.message);
+        //GUI.Label(new Rect(20, 70, 180, 20), "spring force" + defaultScene.selectedBlock?._massPoints[2].CalcForce());
+        GUI.Label(new Rect(20, 90, 180, 20), "Message " + defaultScene?.isVisible);
 
     }
 
@@ -110,15 +132,49 @@ public static class CreateButtonUi
                     block.OnSpaceKeyPress();
                 }
             }
-            if (ev.keyCode == KeyCode.LeftArrow)
+            /*
+            ← : 右脚を左ポケットに
+            → : 左脚を右ポケットに
+            ↑ : 縦に連結
+            */
+            if (defaultScene.selectedBlock != null
+            && defaultScene.connectedBlock != null)
             {
-                Debug.Log("Left arrow key is pressed");
-                foreach (var block in _blocks)
+                if (ev.keyCode == KeyCode.UpArrow)
                 {
-                    Debug.Log("[foreach] block id: " + block.ID);
-                    block.OnLeftKeyPress();
-                }
+                    Debug.Log("Up arrow key is pressed");
+                    defaultScene.selectedBlock.OnUpKeyPress();
+                    defaultScene.connectedBlock.OnUpKeyPress();
 
+                }
+                if (ev.keyCode == KeyCode.LeftArrow)
+                {
+                    Debug.Log("Left arrow key is pressed");
+                    defaultScene.selectedBlock.OnLeftKeyPress();
+                    defaultScene.connectedBlock.OnLeftKeyPress();
+                }
+                if (ev.keyCode == KeyCode.RightArrow)
+                {
+                    Debug.Log("Right arrow key is pressed");
+                    defaultScene.selectedBlock.OnRightKeyPress();
+                    defaultScene.connectedBlock.OnRightKeyPress();
+                    defaultScene.selectedBlock.NewConnectSpring(connectType: ConnectType.Right_ConnectedToSelect);
+                    defaultScene.connectedBlock.NewConnectSpring(connectType: ConnectType.Right_ConnectedToSelect);
+                }
+                if (ev.keyCode == KeyCode.A)
+                {
+                    Debug.Log("A key is pressed");
+                    defaultScene.selectedBlock.OnAKeyPress();
+                    defaultScene.connectedBlock.OnAKeyPress();
+                    defaultScene.selectedBlock.NewConnectSpring(connectType: ConnectType.Left_SelectToConnected);
+                    defaultScene.connectedBlock.NewConnectSpring(connectType: ConnectType.Left_SelectToConnected);
+                }
+                if (ev.keyCode == KeyCode.D)
+                {
+                    Debug.Log("D key is pressed");
+                    defaultScene.selectedBlock.OnRightKeyPress();
+                    defaultScene.connectedBlock.OnRightKeyPress();
+                }
             }
         }
     }
@@ -145,6 +201,21 @@ public static class CreateButtonUi
               sceneSize.y - 60,
               buttonSize,
               40);
+            var rect3 = new Rect(
+            sceneSize.x / 2 - buttonSize * (count) / 2 + buttonSize * (i + 2),
+            sceneSize.y - 60,
+            buttonSize,
+            40);
+            var rect4 = new Rect(
+            sceneSize.x / 2 - buttonSize * (count) / 2 + buttonSize * (i + 3),
+            sceneSize.y - 60,
+            buttonSize,
+            40);
+            var rect5 = new Rect(
+            sceneSize.x / 2 - buttonSize * (count) / 2 + buttonSize * (i + 4),
+            sceneSize.y - 60,
+            buttonSize,
+            40);
 
             if (GUI.Button(rect, "ブロックを追加"))
             {
@@ -168,7 +239,12 @@ public static class CreateButtonUi
                     //mesh.SetNormals();
                     meshfilter.mesh = mesh;
                     block.mesh = mesh;
+                    if (_blocks.Count != 0)
+                    {
+                        obj.transform.position = _blocks[ID - 1].transform.position + new Vector3(margin * 5, 0, 0);
+                    }
                     block.SetVertices();
+                    block.defaultScene = defaultScene;
                     block.ID = ID;
                     ID++;
                     _blocks.Add(block);
@@ -226,6 +302,8 @@ public static class CreateButtonUi
                                     block.mesh = mesh;
                                     block.SetVertices();
                                     block.ID = ID;
+                                    block.defaultScene = defaultScene;
+                                    block._isFixed = true;
                                     ID++;
                                     _blocks.Add(block);
                                     var size = ChangeBlockVallySize(shape[0].m_Size, block);
@@ -316,6 +394,24 @@ public static class CreateButtonUi
                 }
 
             }
+            if (GUI.Button(rect3, "Spring"))
+            {
+                defaultScene.isVisible = !defaultScene.isVisible;
+            }
+            if (GUI.Button(rect4, "ground"))
+            {
+                if (defaultScene.selectedBlock != null)
+                {
+
+                }
+            }
+            if (GUI.Button(rect5, "sky"))
+            {
+                if (defaultScene.selectedBlock != null)
+                {
+
+                }
+            }
         }
     }
     public static string[] ReadObjFile(string fileName)
@@ -403,6 +499,7 @@ public static class CreateButtonUi
         int column = (int)((height - blockBackSize) / _margin) + 1;
         return column;
     }
+
 
     /// <summary>
     /// ブロックのスケールを調整する(案1)
