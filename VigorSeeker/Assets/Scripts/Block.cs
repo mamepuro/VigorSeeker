@@ -5,7 +5,18 @@ using System;
 //using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.AI;
+using System.Collections.Specialized;
 
+public enum ConnectType
+{
+    Left_SelectToConnected, //セレクトしてるものをコネクトに接続
+    Right_SelectToConnected,
+    Left_ConnectedToSelect,//コネクトからセレクトしているものに接続
+    Right_ConnectedToSelect,
+    Top, //未使用
+    Bottom //未使用
+
+}
 [ExecuteAlways]
 public class Block : MonoBehaviour
 {
@@ -16,12 +27,16 @@ public class Block : MonoBehaviour
     /// 新しく頂点を追加するための一時的な頂点リスト
     /// </summary>
     [SerializeField] Vector3[] _tmpVertices;
-    [SerializeField] List<Spring> _springs;
+    [SerializeField] public List<Spring> _springs;
     [SerializeField] public List<MassPoint> _massPoints;
-    [SerializeField] public bool _isFixed = true;
+    [SerializeField] public bool _isFixed = false;
+    [SerializeField] public bool _isAnimatable = true;
+    [SerializeField] int _unionID = -1;
     /// <summary>
     /// シーンマネージャーへの参照
     /// </summary>
+    [SerializeField]
+    public
     DefaultScene defaultScene;
     const int _leftLegIndex = 2;
     const int _rightLegIndex = 5;
@@ -58,6 +73,11 @@ public class Block : MonoBehaviour
     const float _springConstant = 10.0f;
     const float _restLength = 0.1f;
     bool _isDebug = true;
+
+    public static float _margin = 0.2f;
+    public static float blockVallaySize = 4.454382f - 4.378539f;
+    public static float margin = 4.378539f - 3.99421f;
+
     public void OnEnable()
     {
         // mesh = GetComponent<MeshFilter>().sharedMesh;
@@ -78,6 +98,21 @@ public class Block : MonoBehaviour
         _rightPocketInsertingBlock = new List<Block>();
         //頂点数は6固定
         _tmpVertices = new Vector3[6];
+    }
+    void OnDrawGizmos()
+    {
+        if (defaultScene.isVisible)
+        {
+            //Debug.Log("spring count is " + _springs.Count);
+            {
+
+            }
+            foreach (var spring in _springs)
+            {
+                Gizmos.color = Color.blue;
+                Gizmos.DrawLine(spring._leftMassPoint._position, spring._rightMassPoint._position);
+            }
+        }
     }
     /// <summary>
     /// 毎フレームレンダリングする
@@ -161,10 +196,10 @@ public class Block : MonoBehaviour
             i++;
         }
         //testbending
-        _tmpVertices[2] = new Vector3(_tmpVertices[2].x + 0.1f, _tmpVertices[2].y, _tmpVertices[2].z);
-        _massPoints[2]._position = new Vector3(_massPoints[2]._position.x + 0.1f, _massPoints[2]._position.y, _massPoints[2]._position.z);
-        _tmpVertices[5] = new Vector3(_tmpVertices[5].x - 0.1f, _tmpVertices[5].y, _tmpVertices[5].z);
-        _massPoints[5]._position = new Vector3(_massPoints[5]._position.x - 0.1f, _massPoints[5]._position.y, _massPoints[5]._position.z);
+        _tmpVertices[2] = new Vector3(_tmpVertices[0].x, _tmpVertices[2].y, _tmpVertices[2].z);
+        _massPoints[2]._position = new Vector3(_massPoints[0]._position.x, _massPoints[2]._position.y, _massPoints[2]._position.z);
+        _tmpVertices[5] = new Vector3(_tmpVertices[3].x, _tmpVertices[5].y, _tmpVertices[5].z);
+        _massPoints[5]._position = new Vector3(_massPoints[3]._position.x, _massPoints[5]._position.y, _massPoints[5]._position.z);
         mesh.SetVertices(_tmpVertices);
         mesh.RecalculateBounds();
         mesh.RecalculateNormals();
@@ -174,12 +209,205 @@ public class Block : MonoBehaviour
     }
     public void OnLeftKeyPress()
     {
-        Debug.Log("On Left key is pressed");
+        if (defaultScene.selectedBlock == this)
+        {
+
+            Debug.Log("selectedBlock is this " + this.ID);
+            //defaultScene.connectedBlock._leftLegInsertedBlock = this;
+            this._rightPocketInsertingBlock.Add(defaultScene.connectedBlock);
+            this._isFixed = false;
+            if (this._rightPocketInsertingBlock.Count != 0
+            && this._leftPocketInsertingBlock.Count != 0)
+            {
+                //閉じた状態で安定させる
+                //TODO: ここは要検討
+                //this._isFixed = true;
+            }
+            this.transform.position = this.transform.position + new Vector3(blockVallaySize, _margin, 0);
+            UpdateMassPointPosition();
+            int i = 0;
+            foreach (var vertex in mesh.vertices)
+            {
+                _tmpVertices[i] = vertex;
+                i++;
+            }
+            _tmpVertices[2] = new Vector3(_tmpVertices[0].x, _tmpVertices[2].y, _tmpVertices[2].z);
+            //_tmpVertices[5] = new Vector3(_tmpVertices[3].x, _tmpVertices[5].y, _tmpVertices[5].z);
+            _massPoints[2]._position = new Vector3(_massPoints[0]._position.x, _massPoints[2]._position.y, _massPoints[2]._position.z);
+            //_massPoints[5]._position = new Vector3(_massPoints[3]._position.x, _massPoints[5]._position.y, _massPoints[5]._position.z);
+            mesh.SetVertices(_tmpVertices);
+            mesh.RecalculateBounds();
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+            //TODO: 天井からつるすバネを張る
+        }
+        if (defaultScene.connectedBlock == this)
+        {
+            Debug.Log("connectedBlock is this " + this.ID);
+            this._leftLegInsertedBlock = defaultScene.selectedBlock;
+            this._isFixed = false;
+            if (this._rightPocketInsertingBlock.Count != 0
+            && this._leftPocketInsertingBlock.Count != 0)
+            {
+                //閉じた状態で安定させる
+                //TODO: ここは要検討
+                //this._isFixed = true;
+            }
+            //this.transform.position = this.transform.position + new Vector3(-blockVallaySize, _margin, 0);
+            UpdateMassPointPosition();
+            int i = 0;
+            foreach (var vertex in mesh.vertices)
+            {
+                _tmpVertices[i] = vertex;
+                i++;
+            }
+            //_tmpVertices[2] = new Vector3(_tmpVertices[0].x, _tmpVertices[2].y, _tmpVertices[2].z);
+            _tmpVertices[5] = new Vector3(_tmpVertices[3].x, _tmpVertices[5].y, _tmpVertices[5].z);
+            //_massPoints[2]._position = new Vector3(_massPoints[0]._position.x, _massPoints[2]._position.y, _massPoints[2]._position.z);
+            _massPoints[5]._position = new Vector3(_massPoints[3]._position.x, _massPoints[5]._position.y, _massPoints[5]._position.z);
+            mesh.SetVertices(_tmpVertices);
+            mesh.RecalculateBounds();
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+        }
+    }
+    public void OnRightKeyPress()
+    {
+        if (defaultScene.selectedBlock == this)
+        {
+
+            Debug.Log("selectedBlock is this " + this.ID);
+            //defaultScene.connectedBlock._leftLegInsertedBlock = this;
+            this._leftPocketInsertingBlock.Add(defaultScene.connectedBlock);
+            this._isFixed = false;
+            if (this._rightPocketInsertingBlock.Count != 0
+            && this._leftPocketInsertingBlock.Count != 0)
+            {
+                //閉じた状態で安定させる
+                //TODO: ここは要検討
+                //this._isFixed = true;
+            }
+            this.transform.position = defaultScene.connectedBlock.transform.position + new Vector3(-blockVallaySize, _margin, 0);
+            UpdateMassPointPosition();
+            int i = 0;
+            foreach (var vertex in mesh.vertices)
+            {
+                _tmpVertices[i] = vertex;
+                i++;
+            }
+            //_tmpVertices[2] = new Vector3(_tmpVertices[0].x, _tmpVertices[2].y, _tmpVertices[2].z);
+            _tmpVertices[5] = new Vector3(_tmpVertices[3].x, _tmpVertices[5].y, _tmpVertices[5].z);
+            //_massPoints[2]._position = new Vector3(_massPoints[0]._position.x, _massPoints[2]._position.y, _massPoints[2]._position.z);
+            _massPoints[5]._position = new Vector3(_massPoints[3]._position.x, _massPoints[5]._position.y, _massPoints[5]._position.z);
+            mesh.SetVertices(_tmpVertices);
+            mesh.RecalculateBounds();
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+            //TODO: 天井からつるすバネを張る
+        }
+        if (defaultScene.connectedBlock == this)
+        {
+            Debug.Log("connectedBlock is this " + this.ID);
+            this._leftLegInsertedBlock = defaultScene.selectedBlock;
+            this._isFixed = false;
+            if (this._rightPocketInsertingBlock.Count != 0
+            && this._leftPocketInsertingBlock.Count != 0)
+            {
+                //閉じた状態で安定させる
+                //TODO: ここは要検討
+                //this._isFixed = true;
+            }
+            //this.transform.position = this.transform.position + new Vector3(-blockVallaySize, _margin, 0);
+            UpdateMassPointPosition();
+            int i = 0;
+            foreach (var vertex in mesh.vertices)
+            {
+                _tmpVertices[i] = vertex;
+                i++;
+            }
+            _tmpVertices[2] = new Vector3(_tmpVertices[0].x, _tmpVertices[2].y, _tmpVertices[2].z);
+            //_tmpVertices[5] = new Vector3(_tmpVertices[3].x, _tmpVertices[5].y, _tmpVertices[5].z);
+            _massPoints[2]._position = new Vector3(_massPoints[0]._position.x, _massPoints[2]._position.y, _massPoints[2]._position.z);
+            //_massPoints[5]._position = new Vector3(_massPoints[3]._position.x, _massPoints[5]._position.y, _massPoints[5]._position.z);
+            mesh.SetVertices(_tmpVertices);
+            mesh.RecalculateBounds();
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+        }
+    }
+    public void OnAKeyPress()
+    {
+        if (defaultScene.selectedBlock == this)
+        {
+
+            Debug.Log("selectedBlock is this " + this.ID);
+            //defaultScene.connectedBlock._leftLegInsertedBlock = this;
+            this._leftPocketInsertingBlock.Add(defaultScene.connectedBlock);
+            this._isFixed = false;
+            if (this._rightPocketInsertingBlock.Count != 0
+            && this._leftPocketInsertingBlock.Count != 0)
+            {
+                //閉じた状態で安定させる
+                //TODO: ここは要検討
+                //this._isFixed = true;
+            }
+            this.transform.position = defaultScene.connectedBlock.transform.position + new Vector3(blockVallaySize, -_margin, 0);
+            UpdateMassPointPosition();
+            int i = 0;
+            foreach (var vertex in mesh.vertices)
+            {
+                _tmpVertices[i] = vertex;
+                i++;
+            }
+            //_tmpVertices[2] = new Vector3(_tmpVertices[0].x, _tmpVertices[2].y, _tmpVertices[2].z);
+            _tmpVertices[5] = new Vector3(_tmpVertices[3].x, _tmpVertices[5].y, _tmpVertices[5].z);
+            //_massPoints[2]._position = new Vector3(_massPoints[0]._position.x, _massPoints[2]._position.y, _massPoints[2]._position.z);
+            _massPoints[5]._position = new Vector3(_massPoints[3]._position.x, _massPoints[5]._position.y, _massPoints[5]._position.z);
+            mesh.SetVertices(_tmpVertices);
+            mesh.RecalculateBounds();
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+            //TODO: 天井からつるすバネを張る
+        }
+        if (defaultScene.connectedBlock == this)
+        {
+            Debug.Log("connectedBlock is this " + this.ID);
+            this._leftLegInsertedBlock = defaultScene.selectedBlock;
+            this._isFixed = false;
+            if (this._rightPocketInsertingBlock.Count != 0
+            && this._leftPocketInsertingBlock.Count != 0)
+            {
+                //閉じた状態で安定させる
+                //TODO: ここは要検討
+                //this._isFixed = true;
+            }
+            //this.transform.position = this.transform.position + new Vector3(-blockVallaySize, _margin, 0);
+            UpdateMassPointPosition();
+            int i = 0;
+            foreach (var vertex in mesh.vertices)
+            {
+                _tmpVertices[i] = vertex;
+                i++;
+            }
+            _tmpVertices[2] = new Vector3(_tmpVertices[0].x, _tmpVertices[2].y, _tmpVertices[2].z);
+            //_tmpVertices[5] = new Vector3(_tmpVertices[3].x, _tmpVertices[5].y, _tmpVertices[5].z);
+            _massPoints[2]._position = new Vector3(_massPoints[0]._position.x, _massPoints[2]._position.y, _massPoints[2]._position.z);
+            //_massPoints[5]._position = new Vector3(_massPoints[3]._position.x, _massPoints[5]._position.y, _massPoints[5]._position.z);
+            mesh.SetVertices(_tmpVertices);
+            mesh.RecalculateBounds();
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+        }
+    }
+    public void OnUpKeyPress()
+    {
+        //TODO: ここは要検討
+        Debug.Log("On Up key is pressed");
         this._isFixed = false;
     }
     void UpdateVertices()
     {
-        if (_massPoints.Count == 0 || _isDebug)
+        if (_massPoints.Count == 0)
         {
             //Debug.Log("massPoints.Count is 0");
             v.Clear();
@@ -188,7 +416,7 @@ public class Block : MonoBehaviour
                 v.Add(transform.TransformPoint(v3));
             }
         }
-        else
+        else if (_isAnimatable)
         {
             v.Clear();
             foreach (var m in _massPoints)
@@ -203,6 +431,10 @@ public class Block : MonoBehaviour
             mesh.RecalculateTangents();
         }
 
+    }
+    void OnChanged()
+    {
+        UpdateMassPointPosition();
     }
     void Initiate()
     {
@@ -224,7 +456,7 @@ public class Block : MonoBehaviour
             //TODO: distanceは遅いのでmagintudeを使う
             var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
             spring.SetSpring(massPoint1, massPoint2,
-            10.0f, springLength: initialLength, 20.0f, 1.0f);
+            10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Leg);
             _springs.Add(spring);
             massPoint1.AddSpring(spring);
             massPoint2.AddSpring(spring);
@@ -236,10 +468,228 @@ public class Block : MonoBehaviour
             var massPoint2 = _massPoints[_legSpring[i, 1]];
             var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
             spring.SetSpring(massPoint1, massPoint2,
-            10.0f, springLength: initialLength, 20.0f, 1.0f);
+            10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Leg);
             _springs.Add(spring);
             massPoint1.AddSpring(spring);
             massPoint2.AddSpring(spring);
+        }
+    }
+    public void UpdateValleySize(float diff)
+    {
+        int i = 0;
+        foreach (var vertex in mesh.vertices)
+        {
+            _tmpVertices[i] = vertex;
+            i++;
+        }
+        //testbending
+        var extra = diff / 2;
+        _tmpVertices[0] = new Vector3(_tmpVertices[0].x - extra, _tmpVertices[0].y, _tmpVertices[0].z);
+        _massPoints[0]._position = new Vector3(_massPoints[0]._position.x - extra, _massPoints[0]._position.y, _massPoints[0]._position.z);
+        _tmpVertices[1] = new Vector3(_tmpVertices[1].x - extra, _tmpVertices[1].y, _tmpVertices[1].z);
+        _massPoints[1]._position = new Vector3(_massPoints[1]._position.x - extra, _massPoints[1]._position.y, _massPoints[1]._position.z);
+        _tmpVertices[2] = new Vector3(_tmpVertices[2].x - extra, _tmpVertices[2].y, _tmpVertices[2].z);
+        _massPoints[2]._position = new Vector3(_massPoints[2]._position.x - extra, _massPoints[2]._position.y, _massPoints[2]._position.z);
+        _tmpVertices[3] = new Vector3(_tmpVertices[3].x + extra, _tmpVertices[3].y, _tmpVertices[3].z);
+        _massPoints[3]._position = new Vector3(_massPoints[3]._position.x + extra, _massPoints[3]._position.y, _massPoints[3]._position.z);
+        _tmpVertices[4] = new Vector3(_tmpVertices[4].x + extra, _tmpVertices[4].y, _tmpVertices[4].z);
+        _massPoints[4]._position = new Vector3(_massPoints[4]._position.x + extra, _massPoints[4]._position.y, _massPoints[4]._position.z);
+        _tmpVertices[5] = new Vector3(_tmpVertices[5].x + extra, _tmpVertices[5].y, _tmpVertices[5].z);
+        _massPoints[5]._position = new Vector3(_massPoints[5]._position.x + extra, _massPoints[5]._position.y, _massPoints[5]._position.z);
+        mesh.SetVertices(_tmpVertices);
+        mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
+        mesh.RecalculateTangents();
+        foreach (var spring in _springs)
+        {
+            //バネの張り直し
+            spring._springLength = Vector3.Distance(_massPoints[spring._massPointIndexes[0]]._position, _massPoints[spring._massPointIndexes[1]]._position);
+        }
+        //Debug.Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        //UpdateVertices();
+    }
+    public void UpdateMassPointPosition()
+    {
+        int i = 0;
+        v.Clear();
+        foreach (Vector3 v3 in mesh.vertices)
+        {
+            v.Add(transform.TransformPoint(v3));
+        }
+        foreach (var vertex in v)
+        {
+            _massPoints[i]._position = vertex;
+            i++;
+        }
+    }
+
+    public void NewConnectSpring(ConnectType connectType)
+    {
+        switch (connectType)
+        {
+            case ConnectType.Left_SelectToConnected:
+                if (this == defaultScene.selectedBlock)
+                {
+                    var spring = gameObject.AddComponent<Spring>();
+                    var massPoint1 = _massPoints[5];
+                    var massPoint2 = defaultScene.connectedBlock._massPoints[2];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    massPoint1.AddSpring(spring);
+                    //massPoint2.AddSpring(spring);
+                }
+                else
+                {
+                    var spring = gameObject.AddComponent<Spring>();
+                    var massPoint1 = defaultScene.selectedBlock._massPoints[5];
+                    var massPoint2 = _massPoints[2];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    //massPoint1.AddSpring(spring);
+                    massPoint2.AddSpring(spring);
+                }
+
+                break;
+
+            case ConnectType.Right_SelectToConnected:
+                //TODO: 
+                if (this == defaultScene.selectedBlock)
+                {
+                    var spring = gameObject.AddComponent<Spring>();
+                    var massPoint1 = _massPoints[5];
+                    var massPoint2 = defaultScene.connectedBlock._massPoints[2];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    massPoint1.AddSpring(spring);
+                    //massPoint2.AddSpring(spring);
+                }
+                else
+                {
+                    var spring = gameObject.AddComponent<Spring>();
+                    var massPoint1 = defaultScene.selectedBlock._massPoints[5];
+                    var massPoint2 = defaultScene.connectedBlock._massPoints[2];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    //massPoint1.AddSpring(spring);
+                    massPoint2.AddSpring(spring);
+                }
+                break;
+
+            case ConnectType.Left_ConnectedToSelect:
+                //TODO:
+                if (this == defaultScene.selectedBlock)
+                {
+                    var spring = gameObject.AddComponent<Spring>();
+                    var massPoint1 = _massPoints[2];
+                    var massPoint2 = defaultScene.connectedBlock._massPoints[5];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    massPoint1.AddSpring(spring);
+                    //massPoint2.AddSpring(spring);
+                }
+                else
+                {
+                    var spring = gameObject.AddComponent<Spring>();
+                    var massPoint1 = defaultScene.selectedBlock._massPoints[2];
+                    var massPoint2 = _massPoints[5];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    //massPoint1.AddSpring(spring);
+                    massPoint2.AddSpring(spring);
+                }
+                break;
+
+            case ConnectType.Right_ConnectedToSelect:
+                if (this == defaultScene.selectedBlock)
+                {
+                    var spring = gameObject.AddComponent<Spring>();
+                    var massPoint1 = _massPoints[5];
+                    var massPoint2 = defaultScene.connectedBlock._massPoints[2];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    massPoint1.AddSpring(spring);
+
+                    spring = gameObject.AddComponent<Spring>();
+                    massPoint1 = _massPoints[4];
+                    massPoint2 = defaultScene.connectedBlock._massPoints[1];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    massPoint1.AddSpring(spring);
+
+                    spring = gameObject.AddComponent<Spring>();
+                    massPoint1 = _massPoints[3];
+                    massPoint2 = defaultScene.connectedBlock._massPoints[0];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    massPoint1.AddSpring(spring);
+                    //massPoint2.AddSpring(spring);
+                }
+                else
+                {
+                    var spring = gameObject.AddComponent<Spring>();
+                    var massPoint1 = defaultScene.selectedBlock._massPoints[5];
+                    var massPoint2 = defaultScene.connectedBlock._massPoints[2];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    //massPoint1.AddSpring(spring);
+                    massPoint2.AddSpring(spring);
+
+                    spring = gameObject.AddComponent<Spring>();
+                    massPoint1 = defaultScene.selectedBlock._massPoints[4];
+                    massPoint2 = defaultScene.connectedBlock._massPoints[1];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    //massPoint1.AddSpring(spring);
+                    massPoint2.AddSpring(spring);
+
+                    spring = gameObject.AddComponent<Spring>();
+                    massPoint1 = defaultScene.selectedBlock._massPoints[3];
+                    massPoint2 = defaultScene.connectedBlock._massPoints[0];
+                    //TODO: distanceは遅いのでmagintudeを使う
+                    initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
+                    spring.SetSpring(massPoint1, massPoint2,
+                    10.0f, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Block);
+                    _springs.Add(spring);
+                    //massPoint1.AddSpring(spring);
+                    massPoint2.AddSpring(spring);
+                }
+                break;
+
+            default:
+                break;
         }
     }
 }

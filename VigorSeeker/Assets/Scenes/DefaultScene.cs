@@ -14,6 +14,7 @@ public class DefaultScene : MonoBehaviour
     /// </summary>
     public Block connectedBlock;
     public string message;
+    public bool isVisible;
     // Start is called before the first frame update
     void Start()
     {

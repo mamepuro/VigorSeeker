@@ -7,7 +7,7 @@ public enum SpringType
 {
     Leg,
     Block,
-    Pocket,
+    Tenchi,
 }
 [ExecuteAlways]
 public class Spring : MonoBehaviour
@@ -38,7 +38,7 @@ public class Spring : MonoBehaviour
 
     }
 
-    public void SetSpring(MassPoint leftMassPoint, MassPoint rightMassPoint, float springConstant, float springLength, float dampingConstant, float restLength)
+    public void SetSpring(MassPoint leftMassPoint, MassPoint rightMassPoint, float springConstant, float springLength, float dampingConstant, float restLength, SpringType springType)
     {
         _leftMassPoint = leftMassPoint;
         _rightMassPoint = rightMassPoint;
@@ -48,6 +48,7 @@ public class Spring : MonoBehaviour
         _restLength = restLength;
         _massPointIndexes.Add(leftMassPoint._index);
         _massPointIndexes.Add(rightMassPoint._index);
+        this.springType = springType;
     }
 
     public Vector3 GetForce(MassPoint massPoint)
@@ -66,14 +67,6 @@ public class Spring : MonoBehaviour
             Vector3 r = _rightMassPoint._position - _leftMassPoint._position;
             Vector3 v = _rightMassPoint._velocity - _leftMassPoint._velocity;
             force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
-            // //相手の質点からから見た引数のmassPointの相対位置(つまりleft - right)
-            // Vector3 r = _leftMassPoint._position - _rightMassPoint._position;
-            // //相手の質点から見た引数のmassPointの相対速度(つまりleft - right)
-            // Vector3 v = _leftMassPoint._velocity - _rightMassPoint._velocity;
-            // float dir = 1 - (_springLength / r.magnitude);
-            // //数値誤差による振動を抑える
-            // //Debug.Log("test " + test + " lID is " + _leftMassPoint._index + " rID is " + _rightMassPoint._index);
-            // force = _springConstant * dir * r + _dampingConstant * v;
             return force;
             //自動生成したコード
             // Vector3 direction = _rightMassPoint._position - _leftMassPoint._position;
@@ -89,17 +82,6 @@ public class Spring : MonoBehaviour
             Vector3 r = _leftMassPoint._position - _rightMassPoint._position;
             Vector3 v = _leftMassPoint._velocity - _rightMassPoint._velocity;
             force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
-            // //相手の質点からから見た引数のmassPointの相対位置(つまりright - left)
-            // Vector3 r = _rightMassPoint._position - _leftMassPoint._position;
-            // //相手の質点から見た引数のmassPointの相対速度(つまりright - left)
-            // Vector3 v = _rightMassPoint._velocity - _leftMassPoint._velocity;
-            // float dir = 1 - (_springLength / r.magnitude);
-            // //数値誤差による振動を抑える
-            // // if (dir <= 0.0000000001)
-            // // {
-            // //     dir = 0;
-            // // }
-            // force = _springConstant * (dir) * r + _dampingConstant * v;
             return force;
             //自動生成したコード
             // Vector3 direction = _leftMassPoint._position - _rightMassPoint._position;
