@@ -1,10 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Numerics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.TextCore;
 using UnityEngine.UIElements;
+using Vector3 = UnityEngine.Vector3;
+using Vector2 = UnityEngine.Vector2;
 
 [ExecuteAlways]
 public class MassPoint : MonoBehaviour
@@ -80,13 +83,13 @@ public class MassPoint : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!block._isFixed)
+        if (!block._isFixed && !_isFixed && block._isAnimatable)
         {
             float dt = 0.01f;
             Vector3 acc = CalcForce() / _mass;
             _force = CalcForce();
             _acc = acc;
-            //Debug.Log("acc: " + acc + " ID is " + _index);
+            //Debug.Log("f= " + _force);
             _velocity += (acc * dt);
             _position = _position + _velocity * dt;
         }
