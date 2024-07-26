@@ -18,7 +18,6 @@ public class DefaultScene : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Debug.Log("DefaultScene.cs is set up");
     }
 
     // Update is called once per frame

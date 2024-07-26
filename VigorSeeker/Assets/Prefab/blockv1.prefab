@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6173642230923169157}
   - component: {fileID: 9094982337854534977}
   - component: {fileID: 933438481159714577}
-  - component: {fileID: 4738395103224502761}
+  - component: {fileID: 4852280879006623663}
   m_Layer: 0
   m_Name: blockv1
   m_TagString: Untagged
@@ -84,7 +84,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &4738395103224502761
+--- !u!114 &4852280879006623663
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -99,9 +99,20 @@ MonoBehaviour:
   mesh: {fileID: 0}
   v: []
   ID: 0
-  _tmpVertices: []
+  _tmpVertices:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  _springs: []
+  _massPoints: []
+  _isFixed: 0
+  _isAnimatable: 1
+  _unionID: -1
+  defaultScene: {fileID: 0}
   _leftLegInsertedBlock: {fileID: 0}
   _rightLegInsertedBlock: {fileID: 0}
   _leftPocketInsertingBlock: []
   _rightPocketInsertingBlock: []
-  _isConnectable: 0

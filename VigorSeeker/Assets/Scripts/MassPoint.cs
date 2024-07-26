@@ -1,10 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Numerics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.TextCore;
 using UnityEngine.UIElements;
+using Vector3 = UnityEngine.Vector3;
+using Vector2 = UnityEngine.Vector2;
 
 [ExecuteAlways]
 public class MassPoint : MonoBehaviour
@@ -19,7 +22,8 @@ public class MassPoint : MonoBehaviour
     [SerializeField] public Vector3 _position;
     [SerializeField] public Vector3 _force;
     [SerializeField] public Vector3 _acc;
-    [SerializeField] public Vector3 move;
+    [SerializeField] public float move;
+    [SerializeField] public int step;
     //[SerializeField] public Vector3 _gravity = new Vector3(0, -9.8f, 0);
     /// <summary>
     /// 質点の固定フラグ
@@ -53,6 +57,7 @@ public class MassPoint : MonoBehaviour
         //     _isFixed = true;
         // }
         this.block = block;
+        step = 0;
     }
     public void AddSpring(Spring spring)
     {
@@ -80,15 +85,17 @@ public class MassPoint : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!block._isFixed)
+        if (!block._isFixed && !_isFixed && block._isAnimatable)
         {
             float dt = 0.01f;
             Vector3 acc = CalcForce() / _mass;
             _force = CalcForce();
             _acc = acc;
-            //Debug.Log("acc: " + acc + " ID is " + _index);
+            //Debug.Log("f= " + _force);
             _velocity += (acc * dt);
+            move = (_velocity * dt).magnitude;
             _position = _position + _velocity * dt;
+            step++;
         }
 
     }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Palmmedia.ReportGenerator.Core;
 using UnityEngine;
 
 [ExecuteAlways]
@@ -8,6 +9,7 @@ public enum SpringType
     Leg,
     Block,
     Tenchi,
+    Connect,
 }
 [ExecuteAlways]
 public class Spring : MonoBehaviour
@@ -26,6 +28,13 @@ public class Spring : MonoBehaviour
     [SerializeField] public float _springLength;
     [SerializeField] public float _dampingConstant;
     [SerializeField] public float _restLength;
+    /// <summary>
+    /// 左から右
+    /// </summary>
+    /// <returns></returns>
+    [SerializeField] public Vector2 _initVector;
+    [SerializeField] public bool _isLeg = false;
+    [SerializeField] public float currentLength;
 
     void OnEnable()
     {
@@ -49,6 +58,10 @@ public class Spring : MonoBehaviour
         _massPointIndexes.Add(leftMassPoint._index);
         _massPointIndexes.Add(rightMassPoint._index);
         this.springType = springType;
+        //Legの場合
+        _isLeg = true;
+        _initVector = new Vector2(_rightMassPoint._position.x - _leftMassPoint._position.x, _rightMassPoint._position.y - _leftMassPoint._position.y).normalized;
+
     }
 
     public Vector3 GetForce(MassPoint massPoint)
@@ -66,7 +79,17 @@ public class Spring : MonoBehaviour
             //Debug.Log("left mass point");
             Vector3 r = _rightMassPoint._position - _leftMassPoint._position;
             Vector3 v = _rightMassPoint._velocity - _leftMassPoint._velocity;
-            force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
+            Vector2 vec = new Vector2(r.x, r.y).normalized;
+            //向きが反対
+            if (Vector2.Dot(vec, _initVector) < 0)
+            {
+                force = -_springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
+            }
+            else
+            {
+                force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
+            }
+            //force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
             return force;
             //自動生成したコード
             // Vector3 direction = _rightMassPoint._position - _leftMassPoint._position;
@@ -82,6 +105,17 @@ public class Spring : MonoBehaviour
             Vector3 r = _leftMassPoint._position - _rightMassPoint._position;
             Vector3 v = _leftMassPoint._velocity - _rightMassPoint._velocity;
             force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
+            Vector2 vec = new Vector2(-r.x, -r.y).normalized;
+            //向きが反対
+            if (Vector2.Dot(vec, _initVector) < 0)
+            {
+                force = -_springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
+            }
+            else
+            {
+                force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
+            }
+            //force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
             return force;
             //自動生成したコード
             // Vector3 direction = _leftMassPoint._position - _rightMassPoint._position;
@@ -94,6 +128,6 @@ public class Spring : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        currentLength = (_rightMassPoint._position - _leftMassPoint._position).magnitude;
     }
 }

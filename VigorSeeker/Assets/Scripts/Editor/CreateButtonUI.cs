@@ -28,11 +28,23 @@ public static class CreateButtonUi
     public static int rowSize = 35;
     public static bool isDebug = true;
 
+
     static CreateButtonUi()
     {
         SceneView.duringSceneGui += OnGui;
         SceneView.duringSceneGui += SceneViewOnDuringSceneGui;
-        defaultScene = new DefaultScene();
+        var o = GameObject.Find("DefaultScene");
+        if (o != null)
+        {
+            Debug.Log("HIT");
+            defaultScene = o.GetComponent<DefaultScene>();
+        }
+        else
+
+        {
+            Debug.Log("GORIRA");
+            defaultScene = new DefaultScene();
+        }
         //ヒエラルキーで選択されたオブジェクトが変更されたときに呼び出される関数を登録
         Selection.selectionChanged += () =>
         {
@@ -79,7 +91,7 @@ public static class CreateButtonUi
             }
             else if (Selection.gameObjects.Length == 0)
             {
-                Debug.Log("Yes");
+                //Debug.Log("Yes");
                 defaultScene.selectedBlock._isAnimatable = true;
                 defaultScene.connectedBlock._isAnimatable = true;
                 defaultScene.selectedBlock = null;
@@ -128,7 +140,7 @@ public static class CreateButtonUi
                 Debug.Log("Space key is pressed");
                 foreach (var block in _blocks)
                 {
-                    Debug.Log("[foreach] block id: " + block.ID);
+                    //Debug.Log("[foreach] block id: " + block.ID);
                     block.OnSpaceKeyPress();
                 }
             }
@@ -142,39 +154,40 @@ public static class CreateButtonUi
             {
                 if (ev.keyCode == KeyCode.UpArrow)
                 {
-                    Debug.Log("Up arrow key is pressed");
+                    //Debug.Log("Up arrow key is pressed");
                     defaultScene.selectedBlock.OnUpKeyPress();
-                    defaultScene.connectedBlock.OnUpKeyPress();
+                    //defaultScene.connectedBlock.OnUpKeyPress();
 
                 }
                 if (ev.keyCode == KeyCode.LeftArrow)
                 {
-                    Debug.Log("Left arrow key is pressed");
+                    //Debug.Log("Left arrow key is pressed");
                     defaultScene.selectedBlock.OnLeftKeyPress();
-                    defaultScene.connectedBlock.OnLeftKeyPress();
+                    //defaultScene.connectedBlock.OnLeftKeyPress();
                 }
                 if (ev.keyCode == KeyCode.RightArrow)
                 {
-                    Debug.Log("Right arrow key is pressed");
+                    //Debug.Log("Right arrow key is pressed");
                     defaultScene.selectedBlock.OnRightKeyPress();
-                    defaultScene.connectedBlock.OnRightKeyPress();
-                    defaultScene.selectedBlock.NewConnectSpring(connectType: ConnectType.Right_ConnectedToSelect);
-                    defaultScene.connectedBlock.NewConnectSpring(connectType: ConnectType.Right_ConnectedToSelect);
+                    //defaultScene.connectedBlock.OnRightKeyPress();
                 }
                 if (ev.keyCode == KeyCode.A)
                 {
                     Debug.Log("A key is pressed");
-                    defaultScene.selectedBlock.OnAKeyPress();
+                    //defaultScene.selectedBlock.OnAKeyPress();
                     defaultScene.connectedBlock.OnAKeyPress();
-                    defaultScene.selectedBlock.NewConnectSpring(connectType: ConnectType.Left_SelectToConnected);
-                    defaultScene.connectedBlock.NewConnectSpring(connectType: ConnectType.Left_SelectToConnected);
                 }
                 if (ev.keyCode == KeyCode.D)
                 {
                     Debug.Log("D key is pressed");
                     defaultScene.selectedBlock.OnRightKeyPress();
-                    defaultScene.connectedBlock.OnRightKeyPress();
+                    //defaultScene.connectedBlock.OnRightKeyPress();
                 }
+            }
+            if (ev.keyCode == KeyCode.A)
+            {
+                Debug.Log("A key is pressed!!!");
+                //defaultScene.isVisible = !defaultScene.isVisible;
             }
         }
     }
@@ -228,7 +241,7 @@ public static class CreateButtonUi
                     Selection.activeObject = obj;
                     obj.name = "block:ID " + ID;
                     Undo.RegisterCreatedObjectUndo(obj, "create object");
-                    Debug.Log("Info: gameObject Added. ID is " + ID);
+                    //Debug.Log("Info: gameObject Added. ID is " + ID);
                     //blockプレハブにアタッチされているblock.csにアクセスする
                     var block = obj.GetComponent<Block>();
                     var meshfilter = obj.GetComponent<MeshFilter>();
@@ -290,7 +303,7 @@ public static class CreateButtonUi
                                     Selection.activeObject = obj;
                                     obj.name = "block:ID " + ID;
                                     Undo.RegisterCreatedObjectUndo(obj, "create object");
-                                    Debug.Log("Info: gameObject Added. ID is " + ID);
+                                    // Debug.Log("Info: gameObject Added. ID is " + ID);
                                     //blockプレハブにアタッチされているblock.csにアクセスする
                                     var block = obj.GetComponent<Block>();
                                     var meshfilter = obj.GetComponent<MeshFilter>();
@@ -304,6 +317,7 @@ public static class CreateButtonUi
                                     block.ID = ID;
                                     block.defaultScene = defaultScene;
                                     block._isFixed = true;
+                                    block._isAnimatable = false;
                                     ID++;
                                     _blocks.Add(block);
                                     var size = ChangeBlockVallySize(shape[0].m_Size, block);
@@ -326,7 +340,7 @@ public static class CreateButtonUi
                                     else
                                     {
                                         block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r + 180.0f / (float)rowSize);
-                                        Debug.Log("rotate around " + 360 / row * r);
+                                        //Debug.Log("rotate around " + 360 / row * r);
                                     }
                                     if (!isDebug)
                                     {
@@ -509,9 +523,9 @@ public static class CreateButtonUi
     /// <returns></returns>
     public static float AdjustScale(Vector3 cylinderSize, ref int column)
     {
-        Debug.Log("init column is " + column);
+        //Debug.Log("init column is " + column);
         float size = (cylinderSize.x * Mathf.PI / (rowSize * 2));
-        Debug.Log("size is " + size + "blockVallaySize is " + blockVallaySize);
+        //Debug.Log("size is " + size + "blockVallaySize is " + blockVallaySize);
         size = size / blockVallaySize;
         float height = cylinderSize.y;
         float blockBackSize = (3.039667f - 1.119001f);
@@ -520,16 +534,16 @@ public static class CreateButtonUi
             return -1;
         }
         column = (int)((height - size) / _margin) + 1;
-        Debug.Log("after column is " + column);
-        Debug.Log("size is " + size);
+        //Debug.Log("after column is " + column);
+        //Debug.Log("size is " + size);
         return size;
     }
 
     public static float ChangeBlockVallySize(Vector3 cylinderSize, Block block)
     {
         float size = (cylinderSize.x * Mathf.PI / (rowSize * 2));
-        Debug.Log("size is " + size + "blockVallaySize is " + blockVallaySize); ;
-        Debug.Log("after size is " + size + "blockVallaySize is " + blockVallaySize);
+        //Debug.Log("size is " + size + "blockVallaySize is " + blockVallaySize); ;
+        //Debug.Log("after size is " + size + "blockVallaySize is " + blockVallaySize);
         if (size >= 0.5)
         {
             Debug.Log("!!!!!!!!!!CAUTION!!!!!!!!!! size is too big");
@@ -538,7 +552,7 @@ public static class CreateButtonUi
         if (diff > 0.0)
         {
         }
-        Debug.Log("diff is " + diff);
+        // Debug.Log("diff is " + diff);
         block.UpdateValleySize(diff);
         return size;
     }
