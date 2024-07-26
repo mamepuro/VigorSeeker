@@ -46,7 +46,8 @@ public class Block : MonoBehaviour
     [SerializeField]
     public
     DefaultScene defaultScene;
-
+    bool initial = true;
+    float initTime = 0;
     const int _leftLegIndex = 2;
     const int _rightLegIndex = 5;
     /// <summary>
@@ -80,12 +81,10 @@ public class Block : MonoBehaviour
     [SerializeField] public float _springConstantLeg = 10.0f;
 
     const float _restLength = 0.1f;
-    bool _isDebug = true;
-
+    bool _isDebug = false;
 
     public static float blockVallaySize = 4.454382f - 4.378539f;
     public static float margin = 4.378539f - 3.99421f;
-
 
     public void OnEnable()
     {
@@ -114,7 +113,8 @@ public class Block : MonoBehaviour
         {
             if (defaultScene.isVisible)
             {
-                // //Debug.Log("spring count is " + _springs.Count);
+
+                // // //Debug.Log("spring count is " + _springs.Count);
                 // Gizmos.color = Color.red;
                 // //var LegLength = Vector3.Distance(_massPoints[0]._position, _massPoints[2]._position);
                 // var LegLengthLocal = Vector3.Distance(_tmpVertices[0], _tmpVertices[2]);
@@ -124,6 +124,20 @@ public class Block : MonoBehaviour
                 // // 脚を曲げる
                 // _tmpVertices[2] = crossLocal.normalized * LegLengthLocal + _tmpVertices[0];
                 // Gizmos.DrawLine(transform.TransformPoint(_tmpVertices[0]), transform.TransformPoint(_tmpVertices[2]));
+                if (this._leftLegInsertedBlock == null && this._rightLegInsertedBlock == null)
+                {
+                    Gizmos.color = Color.blue;
+                    Gizmos.DrawLine(transform.TransformPoint(_tmpVertices[2]), this._leftLegInsertedBlock.transform.TransformPoint(_tmpVertices[2] + new Vector3(0, 0.2f, 0.0f)));
+                    Gizmos.DrawLine(transform.TransformPoint(_tmpVertices[5]), this._rightLegInsertedBlock.transform.TransformPoint(_tmpVertices[5] + new Vector3(0, 0.2f, 0.0f)));
+                }
+                if (this._leftPocketInsertingBlock.Count == 0
+                && this._rightPocketInsertingBlock.Count == 0)
+                {
+                    Gizmos.color = Color.blue;
+                    Gizmos.DrawLine(transform.TransformPoint(_tmpVertices[0]), this._leftPocketInsertingBlock[0].transform.TransformPoint(_tmpVertices[0] + new Vector3(0, -0.2f, 0.0f)));
+                    Gizmos.DrawLine(transform.TransformPoint(_tmpVertices[3]), this._leftPocketInsertingBlock[0].transform.TransformPoint(_tmpVertices[3] + new Vector3(0, -0.2f, 0.0f)));
+                }
+
                 foreach (var spring in _springs)
                 {
                     Gizmos.color = Color.blue;
@@ -207,6 +221,8 @@ public class Block : MonoBehaviour
     }
     public void OnSpaceKeyPress()
     {
+        initTime = Time.time;
+        _isDebug = !_isDebug;
         Debug.Log("On Space key is pressed");
         int i = 0;
         foreach (var vertex in mesh.vertices)
@@ -627,13 +643,50 @@ public class Block : MonoBehaviour
             }
             else
             {
+                bool isFished = true;
+                int step = 0;
                 foreach (var m in _massPoints)
                 {
+
                     v.Add(m._position);
+
+                    if (_isDebug)
+                    {
+                        // Debug.Log("move is " + m.move);
+                        if (m.move >= 0.00005 || m.step < 1500)
+                        {
+                            //Debug.Log("move is " + m.move + "step is " + step);
+
+                            isFished = false;
+                        }
+                        if (Time.time - initTime > 0.1)
+                        {
+                            if (step == 0)
+                            {
+                                Debug.Break();
+                            }
+                        }
+                    }
+
                     //ワールド座標からローカル座標に変換する
                     _tmpVertices[i] = transform.InverseTransformPoint(m._position);
                     i++;
+                    step = m.step;
                 }
+                if (_isDebug)
+                {
+                    if (isFished)
+                    {
+                        if (initial)
+                        {
+                            Debug.Log("Assert step is " + step);
+                            Debug.Log("Time is " + (Time.time - initTime));
+                            initial = false;
+                        }
+                    }
+                }
+
+
             }
             mesh.SetVertices(_tmpVertices);
             mesh.RecalculateBounds();

@@ -28,6 +28,7 @@ public static class CreateButtonUi
     public static int rowSize = 35;
     public static bool isDebug = true;
 
+
     static CreateButtonUi()
     {
         SceneView.duringSceneGui += OnGui;
@@ -316,6 +317,7 @@ public static class CreateButtonUi
                                     block.ID = ID;
                                     block.defaultScene = defaultScene;
                                     block._isFixed = true;
+                                    block._isAnimatable = false;
                                     ID++;
                                     _blocks.Add(block);
                                     var size = ChangeBlockVallySize(shape[0].m_Size, block);

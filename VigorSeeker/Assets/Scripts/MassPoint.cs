@@ -22,7 +22,8 @@ public class MassPoint : MonoBehaviour
     [SerializeField] public Vector3 _position;
     [SerializeField] public Vector3 _force;
     [SerializeField] public Vector3 _acc;
-    [SerializeField] public Vector3 move;
+    [SerializeField] public float move;
+    [SerializeField] public int step;
     //[SerializeField] public Vector3 _gravity = new Vector3(0, -9.8f, 0);
     /// <summary>
     /// 質点の固定フラグ
@@ -56,6 +57,7 @@ public class MassPoint : MonoBehaviour
         //     _isFixed = true;
         // }
         this.block = block;
+        step = 0;
     }
     public void AddSpring(Spring spring)
     {
@@ -91,7 +93,9 @@ public class MassPoint : MonoBehaviour
             _acc = acc;
             //Debug.Log("f= " + _force);
             _velocity += (acc * dt);
+            move = (_velocity * dt).magnitude;
             _position = _position + _velocity * dt;
+            step++;
         }
 
     }
