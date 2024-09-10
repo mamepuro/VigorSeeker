@@ -307,6 +307,7 @@ public class Block : MonoBehaviour
             mesh.RecalculateTangents();
         }
     }
+    //右上に接続
     public void OnRightKeyPress()
     {
         if (defaultScene.selectedBlock == this)
@@ -426,6 +427,7 @@ public class Block : MonoBehaviour
         }
     }
 
+    //右下に接続
     public void OnAKeyPress()
     {
         Debug.Log("On A key is pressed");
