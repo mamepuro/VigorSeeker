@@ -29,6 +29,7 @@ public static class CreateButtonUi
     public static bool isDebug = true;
 
 
+
     static CreateButtonUi()
     {
         SceneView.duringSceneGui += OnGui;
@@ -195,9 +196,10 @@ public static class CreateButtonUi
     /// <summary>
     /// set button
     /// </summary>
+    #region: ボタンの表示
     private static void ShowButtons(Vector2 sceneSize)
     {
-        var count = 1;
+        var count = 5;
         var buttonSize = 90;
 
         foreach (var i in Enumerable.Range(0, count))
@@ -263,7 +265,7 @@ public static class CreateButtonUi
                     _blocks.Add(block);
                 }
             }
-            if (GUI.Button(rect2, "ブロックに変換"))
+            if (GUI.Button(rect2, "ブロックに変換(円柱)"))
             {
                 Debug.Log("convert to block");
                 if (Selection.gameObjects.Length == 1
@@ -428,6 +430,9 @@ public static class CreateButtonUi
             }
         }
     }
+    #endregion
+    // MARK: メッシュデータ作成
+    #region メッシュデータ作成
     public static string[] ReadObjFile(string fileName)
     {
         string texts = (Resources.Load(fileName, typeof(TextAsset)) as TextAsset).text;
@@ -479,7 +484,7 @@ public static class CreateButtonUi
         }
         return triangles;
     }
-
+    #endregion
     public static int GetRow(Vector3 size)
     {
         float blockVallaySize = 4.454382f - 4.378539f;
@@ -557,8 +562,3 @@ public static class CreateButtonUi
         return size;
     }
 }
-
-//private static Block LoadDataTable()
-//{
-//    return AssetDatabase.LoadAssetAtPath<Block>("Assets/Script/Block.asset");
-//}

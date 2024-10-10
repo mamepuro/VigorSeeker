@@ -88,24 +88,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mesh: {fileID: -2432090755550338912, guid: f98b80ceb69c3374491c4cd9cc08de27, type: 3}
-  v:
-  - {x: 102.50007, y: 0.085, z: -6.698806}
-  - {x: 2.086082, y: 2.085, z: -6.6534486}
-  - {x: 2.470411, y: 0.164334, z: -4.653448}
-  - {x: 2.5462542, y: 0.164334, z: -6.6534476}
-  - {x: 2.5462542, y: 0.164334, z: -4.653448}
-  - {x: 2.930454, y: 2.085, z: -6.6534476}
-  - {x: 2.470411, y: 0.164334, z: -6.6534476}
-  - {x: 2.470411, y: 0.164334, z: -4.653448}
-  - {x: 2.5462542, y: 0.164334, z: -4.653448}
-  - {x: 2.5462542, y: 0.164334, z: -6.6534476}
+  v: []
   ID: 0
-  _tmpVertices: []
+  _tmpVertices:
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  - {x: 0, y: 0, z: 0}
+  _springs: []
+  _massPoints: []
+  _isFixed: 0
+  _isAnimatable: 0
+  _unionID: -1
+  defaultScene: {fileID: 0}
   _leftLegInsertedBlock: {fileID: 0}
   _rightLegInsertedBlock: {fileID: 0}
   _leftPocketInsertingBlock: []
   _rightPocketInsertingBlock: []
-  _isConnectable: 0
+  _margin: 0.08533333
+  _springConstantLeg: 10
 --- !u!33 &3694480940291600803
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -134,7 +137,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 19679aadf3ac693428dedbd50e65ca8f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

@@ -70,7 +70,7 @@ public class Spring : MonoBehaviour
         //ばねに接続されている質点でない場合は力を返さない
         if (!(massPoint == _leftMassPoint || massPoint == _rightMassPoint))
         {
-            Debug.Log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            Debug.Log("ERROR: mass point is not connected to this spring.");
             return force;
         }
         //左側の質点についての場合
@@ -118,6 +118,7 @@ public class Spring : MonoBehaviour
             //force = _springConstant * (r.magnitude - _springLength) * r.normalized + _dampingConstant * v;
             return force;
             //自動生成したコード
+            //　間違っているかもしれないので注意
             // Vector3 direction = _leftMassPoint._position - _rightMassPoint._position;
             // float distance = direction.magnitude;
             // float displacement = distance - _springLength;
