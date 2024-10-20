@@ -265,7 +265,165 @@ public static class CreateButtonUi
                     _blocks.Add(block);
                 }
             }
-            if (GUI.Button(rect2, "ブロックに変換(円柱)"))
+            if (GUI.Button(rect2, "convert"))
+            {
+                {
+                    Debug.Log("convert to block(円錐)");
+                    if (Selection.gameObjects.Length == 1
+                    && Selection.activeGameObject.GetComponent<ProBuilderShape>() != null)
+                    {
+                        var shape = Selection.activeGameObject.GetComponents<ProBuilderShape>();
+                        var c_Transform = Selection.activeGameObject.transform;
+                        Debug.Log("shape size: " + shape.Length);
+                        foreach (var s in shape)
+                        {
+                            Debug.Log("component size: " + s.m_Size);
+
+                        }
+                        var row = GetRow(shape[0].m_Size);
+                        var column = GetColumn(shape[0].m_Size);
+                        if (row == -1 || column == -1)
+                        {
+                            Debug.Log("Error: row or column is not correct");
+                            defaultScene.message = "Error: row or column is not correct";
+                            Debug.Log("Hint: row is " + row + " column is " + column);
+                        }
+                        else
+                        {
+                            Debug.Log("Hint: row is " + row + " column is " + column);
+                            //defaultScene.message = "row: " + row + " column: " + column;
+                            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefab/blockv1.prefab");
+                            var parent = new GameObject("parent");
+                            //var scale = AdjustScale(shape[0].m_Size, ref column);
+                            if (prefab != null)
+                            {
+                                for (int c = 0; c < column; c++)
+                                {
+                                    var col = new GameObject("column" + c);
+                                    col.transform.parent = parent.transform;
+                                    for (int r = 0; r < rowSize; r++)
+                                    {
+                                        var obj = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                                        obj.transform.parent = col.transform;
+                                        var vertices = CreateMeshVertices(ReadObjFile("block"));
+                                        var triangles = CreateTriangles(ReadObjFile("block"));
+                                        Selection.activeObject = obj;
+                                        obj.name = "block:ID " + ID;
+                                        Undo.RegisterCreatedObjectUndo(obj, "create object");
+                                        // Debug.Log("Info: gameObject Added. ID is " + ID);
+                                        //blockプレハブにアタッチされているblock.csにアクセスする
+                                        var block = obj.GetComponent<Block>();
+                                        var meshfilter = obj.GetComponent<MeshFilter>();
+                                        var mesh = new Mesh();
+                                        mesh.SetVertices(vertices);
+                                        mesh.SetTriangles(triangles, 0);
+                                        //mesh.SetNormals();
+                                        meshfilter.mesh = mesh;
+                                        block.mesh = mesh;
+                                        block.SetVertices();
+                                        block.ID = ID;
+                                        block.defaultScene = defaultScene;
+                                        block._isFixed = true;
+                                        block._isAnimatable = false;
+                                        //block.transform.Rotate(0, 180, 0);
+                                        ID++;
+                                        _blocks.Add(block);
+                                        var newX = (shape[0].m_Size.x * (shape[0].m_Size.y - c * _margin)) / (shape[0].m_Size.y);
+                                        Vector3 newSize = new Vector3(shape[0].m_Size.x, shape[0].m_Size.y, shape[0].m_Size.x);
+                                        var size = ChangeBlockVallySize(newSize, block);
+                                        block.TransformInsertionModel();
+                                        var radius = size * rowSize * 2 / (2 * Mathf.PI);
+                                        Debug.Log("H:radius is " + radius + "column is " + c);
+                                        if (radius >= 2.0)
+                                        {
+                                            //radius = radius - 2.0f;
+                                            Debug.Log("radius is " + radius);
+
+                                            block.transform.position = new Vector3(c_Transform.position.x, c_Transform.position.y - shape[0].m_Size.y / 2 + c * _margin, c_Transform.position.z - radius);
+                                            //block.transform.RotateAround(block.transform.position, Vector3.up, 180.0f);
+                                            if (c % 2 == 0)
+                                            {
+                                                block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r);
+                                                //Debug.Log("rotate around " + 360 / row * r);
+                                            }
+                                            else
+                                            {
+                                                block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r + 180.0f / (float)rowSize);
+                                                //Debug.Log("rotate around " + 360 / row * r);
+                                            }
+                                            //block.transform.RotateAround(block.transform.position, Vector3.up, 180);
+                                            if (!isDebug)
+                                            {
+                                                if (c != 0)
+                                                {
+                                                    //ブロックに差し込む
+                                                    if (c % 2 == 0)
+                                                    {
+                                                        int myIndex = ID - 1;
+                                                        var rightPocket = _blocks[myIndex - rowSize];
+                                                        var leftIndex = myIndex - rowSize - 1;
+                                                        if (r == 0)
+                                                        {
+                                                            leftIndex = myIndex - 1;
+                                                        }
+                                                        var leftPocket = _blocks[leftIndex];
+                                                        block._rightPocketInsertingBlock.Add(rightPocket);
+                                                        block._leftPocketInsertingBlock.Add(leftPocket);
+                                                        var spring = obj.AddComponent<Spring>();
+                                                        var spring2 = obj.AddComponent<Spring>();
+                                                        var massPoint1 = block._massPoints[2];
+                                                        var massPoint2 = leftPocket._massPoints[2];
+                                                        //TODO: distanceは遅いのでmagintudeを使う
+                                                        var initialLength1 = Vector3.Distance(massPoint1._position, massPoint2._position);
+                                                        spring.SetSpring(massPoint1, massPoint2,
+                                                        10.0f, springLength: initialLength1, 20.0f, 1.0f, springType: SpringType.Block);
+                                                        block._springs.Add(spring);
+                                                        massPoint1.AddSpring(spring);
+                                                        massPoint2.AddSpring(spring);
+                                                        //TODO: springsの追加は本当にこれでOKか？
+                                                    }
+                                                    //ブロックに差し込む
+                                                    if (c % 2 == 1)
+                                                    {
+                                                        int myIndex = ID - 1;
+                                                        var rightIndex = myIndex - rowSize + 1;
+                                                        var leftIndex = myIndex - rowSize;
+                                                        if (r == rowSize - 1)
+                                                        {
+                                                            rightIndex = myIndex - rowSize - rowSize + 1;
+                                                        }
+                                                        var leftPocket = _blocks[leftIndex];
+                                                        var rightPocket = _blocks[rightIndex];
+                                                        block._rightPocketInsertingBlock.Add(rightPocket);
+                                                        block._leftPocketInsertingBlock.Add(leftPocket);
+                                                        var spring = obj.AddComponent<Spring>();
+                                                        var spring2 = obj.AddComponent<Spring>();
+                                                        var massPoint1 = block._massPoints[5];
+                                                        var massPoint2 = leftPocket._massPoints[5];
+                                                        //TODO: distanceは遅いのでmagintudeを使う
+                                                        var initialLength1 = Vector3.Distance(massPoint1._position, massPoint2._position);
+                                                        spring.SetSpring(massPoint1, massPoint2,
+                                                        10.0f, springLength: initialLength1, 20.0f, 1.0f, springType: SpringType.Block);
+                                                        block._springs.Add(spring);
+                                                        massPoint1.AddSpring(spring);
+                                                        massPoint2.AddSpring(spring);
+                                                        //TODO: springsの追加は本当にこれでOKか？
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            radius = 0.0f;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (GUI.Button(rect3, "convert"))
             {
                 Debug.Log("convert to block");
                 if (Selection.gameObjects.Length == 1
@@ -407,25 +565,6 @@ public static class CreateButtonUi
                             }
                         }
                     }
-                }
-
-            }
-            if (GUI.Button(rect3, "Spring"))
-            {
-                defaultScene.isVisible = !defaultScene.isVisible;
-            }
-            if (GUI.Button(rect4, "ground"))
-            {
-                if (defaultScene.selectedBlock != null)
-                {
-
-                }
-            }
-            if (GUI.Button(rect5, "sky"))
-            {
-                if (defaultScene.selectedBlock != null)
-                {
-
                 }
             }
         }
