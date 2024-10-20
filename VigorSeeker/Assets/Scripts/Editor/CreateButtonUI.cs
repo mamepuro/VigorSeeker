@@ -199,7 +199,7 @@ public static class CreateButtonUi
     #region: ボタンの表示
     private static void ShowButtons(Vector2 sceneSize)
     {
-        var count = 5;
+        var count = 1;
         var buttonSize = 90;
 
         foreach (var i in Enumerable.Range(0, count))
