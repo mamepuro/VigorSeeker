@@ -76,12 +76,17 @@ public class Block : MonoBehaviour
     [SerializeField] public List<Block> _rightPocketInsertingBlock;
     [SerializeField] public float _margin = 0.08533333333f;
 
-    const float _dampingConstant = 0;
+    const float _mass = 30.0f;
+    const float _dampingConstant = 20.0f;
     const float _springConstant = 10.0f;
-    [SerializeField] public float _springConstantLeg = 10.0f;
+    [SerializeField] public float _springConstantLeg = 1.0f;
 
     const float _restLength = 0.1f;
-    bool _isDebug = false;
+    bool _isDebug = false;//
+    //収束までにかかったステップ数
+    [SerializeField]
+    public int _step = 0;
+
 
     public static float blockVallaySize = 4.454382f - 4.378539f;
     public static float margin = 4.378539f - 3.99421f;
@@ -190,8 +195,8 @@ public class Block : MonoBehaviour
     /// </summary>
     public void TransformInsertionModel()
     {
-        Debug.Log("TransformInsertionModel is called");
-        Debug.Log("On Space key is pressed");
+        //Debug.Log("TransformInsertionModel is called");
+        //Debug.Log("On Space key is pressed");
         int i = 0;
         foreach (var vertex in mesh.vertices)
         {
@@ -223,7 +228,7 @@ public class Block : MonoBehaviour
     {
         initTime = Time.time;
         _isDebug = !_isDebug;
-        Debug.Log("On Space key is pressed");
+        //Debug.Log("On Space key is pressed");
         int i = 0;
         foreach (var vertex in mesh.vertices)
         {
@@ -248,7 +253,7 @@ public class Block : MonoBehaviour
         if (defaultScene.selectedBlock == this)
         {
 
-            Debug.Log("selectedBlock is this " + this.ID);
+            //Debug.Log("selectedBlock is this " + this.ID);
             //defaultScene.connectedBlock._leftLegInsertedBlock = this;
             this._rightPocketInsertingBlock.Add(defaultScene.connectedBlock);
             this._isFixed = false;
@@ -279,7 +284,7 @@ public class Block : MonoBehaviour
         }
         if (defaultScene.connectedBlock == this)
         {
-            Debug.Log("connectedBlock is this " + this.ID);
+            //Debug.Log("connectedBlock is this " + this.ID);
             this._leftLegInsertedBlock = defaultScene.selectedBlock;
             this._isFixed = false;
             if (this._rightPocketInsertingBlock.Count != 0
@@ -369,7 +374,7 @@ public class Block : MonoBehaviour
             _massPoints[3]._position = (_leftPocketInsertingBlock[0]._massPoints[2]._position - _leftPocketInsertingBlock[0]._massPoints[0]._position).normalized * _margin + _leftPocketInsertingBlock[0]._massPoints[0]._position;
             _massPoints[4]._position = (_leftPocketInsertingBlock[0]._massPoints[2]._position - _leftPocketInsertingBlock[0]._massPoints[0]._position).normalized * _margin + _leftPocketInsertingBlock[0]._massPoints[1]._position;
             //TODO: バネを治す暫定的対応をちゃんと直す
-            Debug.Log("springs " + _springs.Count);
+            //Debug.Log("springs " + _springs.Count);
             i = 0;
             int spring1 = 0;
             int spring2 = 0;
@@ -430,7 +435,7 @@ public class Block : MonoBehaviour
     //右下に接続
     public void OnAKeyPress()
     {
-        Debug.Log("On A key is pressed");
+        //Debug.Log("On A key is pressed");
         if (defaultScene.selectedBlock == this)
         {
             //Debug.Log("connectedBlock is this " + this.ID);
@@ -520,12 +525,12 @@ public class Block : MonoBehaviour
             {
                 if (spring._massPointIndexes[0] == 2 && spring._massPointIndexes[1] == 0)
                 {
-                    Debug.Log("2 0");
+                    //Debug.Log("2 0");
                     spring1 = i;
                 }
                 if (spring._massPointIndexes[0] == 0 && spring._massPointIndexes[1] == 1)
                 {
-                    Debug.Log("0 1");
+                    //Debug.Log("0 1");
                     spring2 = i;
                 }
                 i++;
@@ -537,7 +542,7 @@ public class Block : MonoBehaviour
     public void OnUpKeyPress()
     {
         //TODO: ここは要検討
-        Debug.Log("On Up key is pressed");
+        //Debug.Log("On Up key is pressed");
         this._isFixed = false;
     }
     void UpdateVertices()
@@ -652,30 +657,30 @@ public class Block : MonoBehaviour
 
                     v.Add(m._position);
 
-                    if (_isDebug)
+                    if (true)//isDebug
                     {
                         // Debug.Log("move is " + m.move);
-                        if (m.move >= 0.00005 || m.step < 1500)
+                        if (m.move >= 0.00005)
                         {
                             //Debug.Log("move is " + m.move + "step is " + step);
 
                             isFished = false;
                         }
-                        if (Time.time - initTime > 0.1)
-                        {
-                            if (step == 0)
-                            {
-                                Debug.Break();
-                            }
-                        }
-                    }
+                        // if (Time.time - initTime > 0.1)
+                        // {
+                        //     if (step == 0)
+                        //     {
+                        //         Debug.Break();
+                        //     }
+                        // }
+                    }  //
 
                     //ワールド座標からローカル座標に変換する
                     _tmpVertices[i] = transform.InverseTransformPoint(m._position);
                     i++;
                     step = m.step;
                 }
-                if (_isDebug)
+                if (true)//isDebug
                 {
                     if (isFished)
                     {
@@ -710,7 +715,7 @@ public class Block : MonoBehaviour
         for (int i = 0; i < v.Count; i++)
         {
             var massPoint = gameObject.AddComponent<MassPoint>();
-            massPoint.SetMassSpring(30.0f, Vector3.zero, i, v[i], this);
+            massPoint.SetMassSpring(_mass, Vector3.zero, i, v[i], this);
             _massPoints.Add(massPoint);
         }
         for (int i = 0; i < _initialSpringIndex.GetLength(0); i++)
@@ -721,7 +726,7 @@ public class Block : MonoBehaviour
             //TODO: distanceは遅いのでmagintudeを使う
             var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
             spring.SetSpring(massPoint1, massPoint2,
-            _springConstant, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Leg);
+            _springConstant, springLength: initialLength, _dampingConstant, 1.0f, springType: SpringType.Leg);
             _springs.Add(spring);
             massPoint1.AddSpring(spring);
             massPoint2.AddSpring(spring);
@@ -733,7 +738,7 @@ public class Block : MonoBehaviour
             var massPoint2 = _massPoints[_legSpring[i, 1]];
             var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
             spring.SetSpring(massPoint1, massPoint2,
-            _springConstantLeg, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Leg);
+            _springConstantLeg, springLength: initialLength, _dampingConstant, 1.0f, springType: SpringType.Leg);
             _springs.Add(spring);
             massPoint1.AddSpring(spring);
             massPoint2.AddSpring(spring);
@@ -804,7 +809,7 @@ public class Block : MonoBehaviour
                     else
                     {
                         var massPoint = gameObject.AddComponent<MassPoint>();
-                        massPoint.SetMassSpring(30.0f, Vector3.zero, i, transform.TransformPoint(vertices[i]), this);
+                        massPoint.SetMassSpring(_mass, Vector3.zero, i, transform.TransformPoint(vertices[i]), this);
                         _massPoints.Add(massPoint);
                         if (i == 0 || i == 1)
                         {
@@ -820,7 +825,7 @@ public class Block : MonoBehaviour
                     //TODO: distanceは遅いのでmagintudeを使う
                     var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
                     spring.SetSpring(massPoint1, massPoint2,
-                    _springConstant, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Leg);
+                    _springConstant, springLength: initialLength, _dampingConstant, 1.0f, springType: SpringType.Leg);
                     _springs.Add(spring);
                     massPoint1.AddSpring(spring);
                     massPoint2.AddSpring(spring);
@@ -832,7 +837,7 @@ public class Block : MonoBehaviour
                     var massPoint2 = _massPoints[_legSpring[i, 1]];
                     var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
                     spring.SetSpring(massPoint1, massPoint2,
-                    _springConstantLeg, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Leg);
+                    _springConstantLeg, springLength: initialLength, _dampingConstant, 1.0f, springType: SpringType.Leg);
                     _springs.Add(spring);
                     massPoint1.AddSpring(spring);
                     massPoint2.AddSpring(spring);
@@ -859,7 +864,7 @@ public class Block : MonoBehaviour
                     else
                     {
                         var massPoint = gameObject.AddComponent<MassPoint>();
-                        massPoint.SetMassSpring(30.0f, Vector3.zero, i, transform.TransformPoint(vertices[i]), this);
+                        massPoint.SetMassSpring(_mass, Vector3.zero, i, transform.TransformPoint(vertices[i]), this);
                         _massPoints.Add(massPoint);
                         if (i == 3 || i == 4)
                         {
@@ -875,7 +880,7 @@ public class Block : MonoBehaviour
                     //TODO: distanceは遅いのでmagintudeを使う
                     var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
                     spring.SetSpring(massPoint1, massPoint2,
-                    _springConstant, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Leg);
+                    _springConstant, springLength: initialLength, _dampingConstant, 1.0f, springType: SpringType.Leg);
                     _springs.Add(spring);
                     massPoint1.AddSpring(spring);
                     massPoint2.AddSpring(spring);
@@ -887,7 +892,7 @@ public class Block : MonoBehaviour
                     var massPoint2 = _massPoints[_legSpring[i, 1]];
                     var initialLength = Vector3.Distance(massPoint1._position, massPoint2._position);
                     spring.SetSpring(massPoint1, massPoint2,
-                    _springConstantLeg, springLength: initialLength, 20.0f, 1.0f, springType: SpringType.Leg);
+                    _springConstantLeg, springLength: initialLength, _dampingConstant, 1.0f, springType: SpringType.Leg);
                     _springs.Add(spring);
                     massPoint1.AddSpring(spring);
                     massPoint2.AddSpring(spring);

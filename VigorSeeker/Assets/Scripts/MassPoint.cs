@@ -85,7 +85,7 @@ public class MassPoint : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!block._isFixed && !_isFixed && block._isAnimatable)
+        if (true/*block._isFixed && !_isFixed && block._isAnimatable*/)
         {
             float dt = 0.01f;
             Vector3 acc = CalcForce() / _mass;

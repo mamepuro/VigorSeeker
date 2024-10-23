@@ -25,7 +25,7 @@ public static class CreateButtonUi
     public static float blockVallaySize = 4.454382f - 4.378539f;
 
     public static float margin = 4.378539f - 3.99421f;
-    public static int rowSize = 35;
+    public static int rowSize = 34;
     public static bool isDebug = true;
 
 
@@ -49,12 +49,12 @@ public static class CreateButtonUi
         //ヒエラルキーで選択されたオブジェクトが変更されたときに呼び出される関数を登録
         Selection.selectionChanged += () =>
         {
-            Debug.Log("selection changed");
-            Debug.Log("selection.activeGameObject is " + Selection.gameObjects.Length);
+            //Debug.Log("selection changed");
+            //Debug.Log("selection.activeGameObject is " + Selection.gameObjects.Length);
             if (Selection.activeGameObject != null)
             {
                 var x = Selection.activeGameObject.GetComponent<Transform>();
-                Debug.Log("child count is " + x.childCount);
+                //Debug.Log("child count is " + x.childCount);
 
             }
 
@@ -64,8 +64,8 @@ public static class CreateButtonUi
             {
                 if (Selection.activeGameObject.GetComponent<Block>() != null)
                 {
-                    Debug.Log("selectedBlock is not null");
-                    Debug.Log("selection.activeGameObject is " + Selection.gameObjects.Length);
+                    //Debug.Log("selectedBlock is not null");
+                    //Debug.Log("selection.activeGameObject is " + Selection.gameObjects.Length);
                     defaultScene.selectedBlock = Selection.activeGameObject.GetComponent<Block>();
                     if (defaultScene.connectedBlock != null)
                     {
@@ -145,49 +145,59 @@ public static class CreateButtonUi
                     block.OnSpaceKeyPress();
                 }
             }
+            if (ev.keyCode == KeyCode.Keypad4)
+            {
+                Debug.Log("Keypad4 key is pressed");
+            }
             /*
-            ← : 右脚を左ポケットに
-            → : 左脚を右ポケットに
-            ↑ : 縦に連結
+            【How to use】
+            背側を前，目側を裏と定義する(従って，背側の右ポケットが右ポケットとなる)
+            */
+            /*
+            ←(テンキー4) : [wip]選択中のブロックを左上に接続
+            →(テンキー9) : 選択中のブロックを右上に接続(選択中ブロックの左ポケットに接続対象ブロック右脚を挿入)
+            ↑(テンキー8) : 縦に連結
+            A(テンキー1) : 選択中のブロックを左下に接続
             */
             if (defaultScene.selectedBlock != null
             && defaultScene.connectedBlock != null)
             {
-                if (ev.keyCode == KeyCode.UpArrow)
+                if (ev.keyCode == KeyCode.UpArrow || ev.keyCode == KeyCode.Keypad8)
                 {
                     //Debug.Log("Up arrow key is pressed");
                     defaultScene.selectedBlock.OnUpKeyPress();
                     //defaultScene.connectedBlock.OnUpKeyPress();
 
                 }
-                if (ev.keyCode == KeyCode.LeftArrow)
+                if (ev.keyCode == KeyCode.LeftArrow || ev.keyCode == KeyCode.Keypad4)
                 {
                     //Debug.Log("Left arrow key is pressed");
                     defaultScene.selectedBlock.OnLeftKeyPress();
                     //defaultScene.connectedBlock.OnLeftKeyPress();
                 }
-                if (ev.keyCode == KeyCode.RightArrow)
+                if (ev.keyCode == KeyCode.RightArrow || ev.keyCode == KeyCode.Keypad6)
                 {
+
                     //Debug.Log("Right arrow key is pressed");
                     defaultScene.selectedBlock.OnRightKeyPress();
                     //defaultScene.connectedBlock.OnRightKeyPress();
                 }
                 if (ev.keyCode == KeyCode.A)
                 {
-                    Debug.Log("A key is pressed");
+                    //Debug.Log("A key is pressed");
                     //defaultScene.selectedBlock.OnAKeyPress();
                     defaultScene.connectedBlock.OnAKeyPress();
                 }
                 if (ev.keyCode == KeyCode.D)
                 {
-                    Debug.Log("D key is pressed");
+                    //Debug.Log("D key is pressed");
                     defaultScene.selectedBlock.OnRightKeyPress();
                     //defaultScene.connectedBlock.OnRightKeyPress();
                 }
             }
             if (ev.keyCode == KeyCode.A)
             {
-                Debug.Log("A key is pressed!!!");
+                //Debug.Log("A key is pressed!!!");
                 //defaultScene.isVisible = !defaultScene.isVisible;
             }
         }
@@ -297,124 +307,305 @@ public static class CreateButtonUi
                             //var scale = AdjustScale(shape[0].m_Size, ref column);
                             if (prefab != null)
                             {
+                                int newRowSize = rowSize;
                                 for (int c = 0; c < column; c++)
                                 {
                                     var col = new GameObject("column" + c);
                                     col.transform.parent = parent.transform;
-                                    for (int r = 0; r < rowSize; r++)
-                                    {
-                                        var obj = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-                                        obj.transform.parent = col.transform;
-                                        var vertices = CreateMeshVertices(ReadObjFile("block"));
-                                        var triangles = CreateTriangles(ReadObjFile("block"));
-                                        Selection.activeObject = obj;
-                                        obj.name = "block:ID " + ID;
-                                        Undo.RegisterCreatedObjectUndo(obj, "create object");
-                                        // Debug.Log("Info: gameObject Added. ID is " + ID);
-                                        //blockプレハブにアタッチされているblock.csにアクセスする
-                                        var block = obj.GetComponent<Block>();
-                                        var meshfilter = obj.GetComponent<MeshFilter>();
-                                        var mesh = new Mesh();
-                                        mesh.SetVertices(vertices);
-                                        mesh.SetTriangles(triangles, 0);
-                                        //mesh.SetNormals();
-                                        meshfilter.mesh = mesh;
-                                        block.mesh = mesh;
-                                        block.SetVertices();
-                                        block.ID = ID;
-                                        block.defaultScene = defaultScene;
-                                        block._isFixed = true;
-                                        block._isAnimatable = false;
-                                        //block.transform.Rotate(0, 180, 0);
-                                        ID++;
-                                        _blocks.Add(block);
-                                        var newX = (shape[0].m_Size.x * (shape[0].m_Size.y - c * _margin)) / (shape[0].m_Size.y);
-                                        Vector3 newSize = new Vector3(shape[0].m_Size.x, shape[0].m_Size.y, shape[0].m_Size.x);
-                                        var size = ChangeBlockVallySize(newSize, block);
-                                        block.TransformInsertionModel();
-                                        var radius = size * rowSize * 2 / (2 * Mathf.PI);
-                                        Debug.Log("H:radius is " + radius + "column is " + c);
-                                        if (radius >= 2.0)
-                                        {
-                                            //radius = radius - 2.0f;
-                                            Debug.Log("radius is " + radius);
+                                    var Addcount = 0;
 
-                                            block.transform.position = new Vector3(c_Transform.position.x, c_Transform.position.y - shape[0].m_Size.y / 2 + c * _margin, c_Transform.position.z - radius);
-                                            //block.transform.RotateAround(block.transform.position, Vector3.up, 180.0f);
-                                            if (c % 2 == 0)
-                                            {
-                                                block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r);
-                                                //Debug.Log("rotate around " + 360 / row * r);
-                                            }
-                                            else
-                                            {
-                                                block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r + 180.0f / (float)rowSize);
-                                                //Debug.Log("rotate around " + 360 / row * r);
-                                            }
-                                            //block.transform.RotateAround(block.transform.position, Vector3.up, 180);
-                                            if (!isDebug)
-                                            {
-                                                if (c != 0)
-                                                {
-                                                    //ブロックに差し込む
-                                                    if (c % 2 == 0)
-                                                    {
-                                                        int myIndex = ID - 1;
-                                                        var rightPocket = _blocks[myIndex - rowSize];
-                                                        var leftIndex = myIndex - rowSize - 1;
-                                                        if (r == 0)
-                                                        {
-                                                            leftIndex = myIndex - 1;
-                                                        }
-                                                        var leftPocket = _blocks[leftIndex];
-                                                        block._rightPocketInsertingBlock.Add(rightPocket);
-                                                        block._leftPocketInsertingBlock.Add(leftPocket);
-                                                        var spring = obj.AddComponent<Spring>();
-                                                        var spring2 = obj.AddComponent<Spring>();
-                                                        var massPoint1 = block._massPoints[2];
-                                                        var massPoint2 = leftPocket._massPoints[2];
-                                                        //TODO: distanceは遅いのでmagintudeを使う
-                                                        var initialLength1 = Vector3.Distance(massPoint1._position, massPoint2._position);
-                                                        spring.SetSpring(massPoint1, massPoint2,
-                                                        10.0f, springLength: initialLength1, 20.0f, 1.0f, springType: SpringType.Block);
-                                                        block._springs.Add(spring);
-                                                        massPoint1.AddSpring(spring);
-                                                        massPoint2.AddSpring(spring);
-                                                        //TODO: springsの追加は本当にこれでOKか？
-                                                    }
-                                                    //ブロックに差し込む
-                                                    if (c % 2 == 1)
-                                                    {
-                                                        int myIndex = ID - 1;
-                                                        var rightIndex = myIndex - rowSize + 1;
-                                                        var leftIndex = myIndex - rowSize;
-                                                        if (r == rowSize - 1)
-                                                        {
-                                                            rightIndex = myIndex - rowSize - rowSize + 1;
-                                                        }
-                                                        var leftPocket = _blocks[leftIndex];
-                                                        var rightPocket = _blocks[rightIndex];
-                                                        block._rightPocketInsertingBlock.Add(rightPocket);
-                                                        block._leftPocketInsertingBlock.Add(leftPocket);
-                                                        var spring = obj.AddComponent<Spring>();
-                                                        var spring2 = obj.AddComponent<Spring>();
-                                                        var massPoint1 = block._massPoints[5];
-                                                        var massPoint2 = leftPocket._massPoints[5];
-                                                        //TODO: distanceは遅いのでmagintudeを使う
-                                                        var initialLength1 = Vector3.Distance(massPoint1._position, massPoint2._position);
-                                                        spring.SetSpring(massPoint1, massPoint2,
-                                                        10.0f, springLength: initialLength1, 20.0f, 1.0f, springType: SpringType.Block);
-                                                        block._springs.Add(spring);
-                                                        massPoint1.AddSpring(spring);
-                                                        massPoint2.AddSpring(spring);
-                                                        //TODO: springsの追加は本当にこれでOKか？
-                                                    }
-                                                }
-                                            }
+                                    if (c > 3 && c % 2 == 0)
+                                    {
+                                        if (newRowSize % 3 == 0)
+                                        {
+                                            newRowSize = newRowSize / 3 * 2;
                                         }
                                         else
                                         {
-                                            radius = 0.0f;
+                                            newRowSize = (int)System.MathF.Floor(newRowSize / 3) * 2;
+                                            newRowSize = newRowSize + 1;
+                                        }
+                                        Debug.Log("new row size is " + newRowSize);
+                                    }
+                                    for (int r = 0; r < rowSize; r++)
+                                    {
+                                        //安定化のため，4列目まではブロックの飛ばし処理を行わない
+
+                                        if (c > 3)
+                                        {
+                                            if (r >= newRowSize)
+                                            {
+                                                continue;
+                                            }
+                                            var obj = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                                            obj.transform.parent = col.transform;
+                                            var vertices = CreateMeshVertices(ReadObjFile("block"));
+                                            var triangles = CreateTriangles(ReadObjFile("block"));
+                                            Selection.activeObject = obj;
+                                            obj.name = "block:ID " + ID;
+                                            Undo.RegisterCreatedObjectUndo(obj, "create object");
+                                            // Debug.Log("Info: gameObject Added. ID is " + ID);
+                                            //blockプレハブにアタッチされているblock.csにアクセスする
+                                            var block = obj.GetComponent<Block>();
+                                            var meshfilter = obj.GetComponent<MeshFilter>();
+                                            var mesh = new Mesh();
+                                            mesh.SetVertices(vertices);
+                                            mesh.SetTriangles(triangles, 0);
+                                            //mesh.SetNormals();
+                                            meshfilter.mesh = mesh;
+                                            block.mesh = mesh;
+                                            block.SetVertices();
+                                            block.ID = ID;
+                                            block.defaultScene = defaultScene;
+                                            block._isFixed = true;
+                                            block._isAnimatable = false;
+                                            //block.transform.Rotate(0, 180, 0);
+                                            ID++;
+                                            _blocks.Add(block);
+                                            var newX = (shape[0].m_Size.x * (shape[0].m_Size.y - c * _margin)) / (shape[0].m_Size.y);
+                                            Vector3 newSize = new Vector3(shape[0].m_Size.x, shape[0].m_Size.y, shape[0].m_Size.x);
+                                            float size = 0;
+                                            float radius = 0;
+                                            if (c % 2 == 0)
+                                            {
+                                                if (r % 2 == 1)
+                                                {
+                                                    size = ChangeBlockVallySize(newSize, block, true);
+                                                    radius = size * rowSize * 2 / (2 * Mathf.PI);
+                                                }
+                                                else
+                                                {
+                                                    size = ChangeBlockVallySize(newSize, block, false);
+                                                    radius = size * rowSize * 2 / (2 * Mathf.PI);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                size = ChangeBlockVallySize(newSize, block, false);
+                                                radius = size * rowSize * 2 / (2 * Mathf.PI);
+                                            }
+                                            block.TransformInsertionModel();
+                                            Debug.Log("H:radius is " + radius + "column is " + c);
+                                            if (radius >= 2.0)
+                                            {
+                                                //radius = radius - 2.0f;
+                                                Debug.Log("radius is " + radius);
+
+                                                block.transform.position = new Vector3(c_Transform.position.x, c_Transform.position.y - shape[0].m_Size.y / 2 + c * _margin, c_Transform.position.z - radius);
+                                                //block.transform.RotateAround(block.transform.position, Vector3.up, 180.0f);
+                                                if (c % 2 == 0)
+                                                {
+                                                    if (r % 2 == 0)
+                                                    {
+                                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * ((float)r + (float)Addcount));
+                                                        //Addcount++;
+                                                    }
+                                                    if (r % 2 == 1)
+                                                    {
+
+                                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * ((float)r + (float)Addcount) + 180.0f / (float)rowSize);
+                                                        Addcount++;
+                                                    }
+                                                    //Debug.Log("rotate around " + 360 / row * r);
+                                                }
+                                                else
+                                                {
+                                                    if (r % 2 == 0)
+                                                    {
+                                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * ((float)r + (float)Addcount) + 180.0f / (float)rowSize);
+
+                                                    }
+                                                    if (r % 2 == 1)
+                                                    {
+
+                                                        block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * ((float)r + (float)Addcount) + 180.0f / (float)rowSize);
+                                                        Addcount++;
+                                                    }
+
+                                                    //Debug.Log("rotate around " + 360 / row * r);
+                                                }
+                                                //block.transform.RotateAround(block.transform.position, Vector3.up, 180);
+                                                if (!isDebug)
+                                                {
+                                                    if (c != 0)
+                                                    {
+                                                        //ブロックに差し込む
+                                                        if (c % 2 == 0)
+                                                        {
+                                                            int myIndex = ID - 1;
+                                                            var rightPocket = _blocks[myIndex - rowSize];
+                                                            var leftIndex = myIndex - rowSize - 1;
+                                                            if (r == 0)
+                                                            {
+                                                                leftIndex = myIndex - 1;
+                                                            }
+                                                            var leftPocket = _blocks[leftIndex];
+                                                            block._rightPocketInsertingBlock.Add(rightPocket);
+                                                            block._leftPocketInsertingBlock.Add(leftPocket);
+                                                            var spring = obj.AddComponent<Spring>();
+                                                            var spring2 = obj.AddComponent<Spring>();
+                                                            var massPoint1 = block._massPoints[2];
+                                                            var massPoint2 = leftPocket._massPoints[2];
+                                                            //TODO: distanceは遅いのでmagintudeを使う
+                                                            var initialLength1 = Vector3.Distance(massPoint1._position, massPoint2._position);
+                                                            spring.SetSpring(massPoint1, massPoint2,
+                                                            10.0f, springLength: initialLength1, 20.0f, 1.0f, springType: SpringType.Block);
+                                                            block._springs.Add(spring);
+                                                            massPoint1.AddSpring(spring);
+                                                            massPoint2.AddSpring(spring);
+                                                            //TODO: springsの追加は本当にこれでOKか？
+                                                        }
+                                                        //ブロックに差し込む
+                                                        if (c % 2 == 1)
+                                                        {
+                                                            int myIndex = ID - 1;
+                                                            var rightIndex = myIndex - rowSize + 1;
+                                                            var leftIndex = myIndex - rowSize;
+                                                            if (r == rowSize - 1)
+                                                            {
+                                                                rightIndex = myIndex - rowSize - rowSize + 1;
+                                                            }
+                                                            var leftPocket = _blocks[leftIndex];
+                                                            var rightPocket = _blocks[rightIndex];
+                                                            block._rightPocketInsertingBlock.Add(rightPocket);
+                                                            block._leftPocketInsertingBlock.Add(leftPocket);
+                                                            var spring = obj.AddComponent<Spring>();
+                                                            var spring2 = obj.AddComponent<Spring>();
+                                                            var massPoint1 = block._massPoints[5];
+                                                            var massPoint2 = leftPocket._massPoints[5];
+                                                            //TODO: distanceは遅いのでmagintudeを使う
+                                                            var initialLength1 = Vector3.Distance(massPoint1._position, massPoint2._position);
+                                                            spring.SetSpring(massPoint1, massPoint2,
+                                                            10.0f, springLength: initialLength1, 20.0f, 1.0f, springType: SpringType.Block);
+                                                            block._springs.Add(spring);
+                                                            massPoint1.AddSpring(spring);
+                                                            massPoint2.AddSpring(spring);
+                                                            //TODO: springsの追加は本当にこれでOKか？
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                radius = 0.0f;
+                                            }
+                                        }
+                                        //TODO: ここはいじらない
+                                        else
+                                        {
+                                            var obj = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                                            obj.transform.parent = col.transform;
+                                            var vertices = CreateMeshVertices(ReadObjFile("block"));
+                                            var triangles = CreateTriangles(ReadObjFile("block"));
+                                            Selection.activeObject = obj;
+                                            obj.name = "block:ID " + ID;
+                                            Undo.RegisterCreatedObjectUndo(obj, "create object");
+                                            // Debug.Log("Info: gameObject Added. ID is " + ID);
+                                            //blockプレハブにアタッチされているblock.csにアクセスする
+                                            var block = obj.GetComponent<Block>();
+                                            var meshfilter = obj.GetComponent<MeshFilter>();
+                                            var mesh = new Mesh();
+                                            mesh.SetVertices(vertices);
+                                            mesh.SetTriangles(triangles, 0);
+                                            //mesh.SetNormals();
+                                            meshfilter.mesh = mesh;
+                                            block.mesh = mesh;
+                                            block.SetVertices();
+                                            block.ID = ID;
+                                            block.defaultScene = defaultScene;
+                                            block._isFixed = true;
+                                            block._isAnimatable = false;
+                                            //block.transform.Rotate(0, 180, 0);
+                                            ID++;
+                                            _blocks.Add(block);
+                                            var newX = (shape[0].m_Size.x * (shape[0].m_Size.y - c * _margin)) / (shape[0].m_Size.y);
+                                            Vector3 newSize = new Vector3(shape[0].m_Size.x, shape[0].m_Size.y, shape[0].m_Size.x);
+                                            var size = ChangeBlockVallySize(newSize, block);
+                                            block.TransformInsertionModel();
+                                            var radius = size * rowSize * 2 / (2 * Mathf.PI);
+                                            Debug.Log("H:radius is " + radius + "column is " + c);
+                                            if (radius >= 2.0)
+                                            {
+                                                //radius = radius - 2.0f;
+                                                Debug.Log("radius is " + radius);
+
+                                                block.transform.position = new Vector3(c_Transform.position.x, c_Transform.position.y - shape[0].m_Size.y / 2 + c * _margin, c_Transform.position.z - radius);
+                                                //block.transform.RotateAround(block.transform.position, Vector3.up, 180.0f);
+                                                if (c % 2 == 0)
+                                                {
+                                                    block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r);
+                                                    //Debug.Log("rotate around " + 360 / row * r);
+                                                }
+                                                else
+                                                {
+                                                    block.transform.RotateAround(c_Transform.position, Vector3.up, 360.0f / (float)rowSize * (float)r + 180.0f / (float)rowSize);
+                                                    //Debug.Log("rotate around " + 360 / row * r);
+                                                }
+                                                //block.transform.RotateAround(block.transform.position, Vector3.up, 180);
+                                                if (!isDebug)
+                                                {
+                                                    if (c != 0)
+                                                    {
+                                                        //ブロックに差し込む
+                                                        if (c % 2 == 0)
+                                                        {
+                                                            int myIndex = ID - 1;
+                                                            var rightPocket = _blocks[myIndex - rowSize];
+                                                            var leftIndex = myIndex - rowSize - 1;
+                                                            if (r == 0)
+                                                            {
+                                                                leftIndex = myIndex - 1;
+                                                            }
+                                                            var leftPocket = _blocks[leftIndex];
+                                                            block._rightPocketInsertingBlock.Add(rightPocket);
+                                                            block._leftPocketInsertingBlock.Add(leftPocket);
+                                                            var spring = obj.AddComponent<Spring>();
+                                                            var spring2 = obj.AddComponent<Spring>();
+                                                            var massPoint1 = block._massPoints[2];
+                                                            var massPoint2 = leftPocket._massPoints[2];
+                                                            //TODO: distanceは遅いのでmagintudeを使う
+                                                            var initialLength1 = Vector3.Distance(massPoint1._position, massPoint2._position);
+                                                            spring.SetSpring(massPoint1, massPoint2,
+                                                            10.0f, springLength: initialLength1, 20.0f, 1.0f, springType: SpringType.Block);
+                                                            block._springs.Add(spring);
+                                                            massPoint1.AddSpring(spring);
+                                                            massPoint2.AddSpring(spring);
+                                                            //TODO: springsの追加は本当にこれでOKか？
+                                                        }
+                                                        //ブロックに差し込む
+                                                        if (c % 2 == 1)
+                                                        {
+                                                            int myIndex = ID - 1;
+                                                            var rightIndex = myIndex - rowSize + 1;
+                                                            var leftIndex = myIndex - rowSize;
+                                                            if (r == rowSize - 1)
+                                                            {
+                                                                rightIndex = myIndex - rowSize - rowSize + 1;
+                                                            }
+                                                            var leftPocket = _blocks[leftIndex];
+                                                            var rightPocket = _blocks[rightIndex];
+                                                            block._rightPocketInsertingBlock.Add(rightPocket);
+                                                            block._leftPocketInsertingBlock.Add(leftPocket);
+                                                            var spring = obj.AddComponent<Spring>();
+                                                            var spring2 = obj.AddComponent<Spring>();
+                                                            var massPoint1 = block._massPoints[5];
+                                                            var massPoint2 = leftPocket._massPoints[5];
+                                                            //TODO: distanceは遅いのでmagintudeを使う
+                                                            var initialLength1 = Vector3.Distance(massPoint1._position, massPoint2._position);
+                                                            spring.SetSpring(massPoint1, massPoint2,
+                                                            10.0f, springLength: initialLength1, 20.0f, 1.0f, springType: SpringType.Block);
+                                                            block._springs.Add(spring);
+                                                            massPoint1.AddSpring(spring);
+                                                            massPoint2.AddSpring(spring);
+                                                            //TODO: springsの追加は本当にこれでOKか？
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                radius = 0.0f;
+                                            }
                                         }
                                     }
                                 }
@@ -683,7 +874,7 @@ public static class CreateButtonUi
         return size;
     }
 
-    public static float ChangeBlockVallySize(Vector3 cylinderSize, Block block)
+    public static float ChangeBlockVallySize(Vector3 cylinderSize, Block block, bool isBig = false)
     {
         float size = (cylinderSize.x * Mathf.PI / (rowSize * 2));
         //Debug.Log("size is " + size + "blockVallaySize is " + blockVallaySize); ;
@@ -697,6 +888,10 @@ public static class CreateButtonUi
         {
         }
         // Debug.Log("diff is " + diff);
+        if (isBig)
+        {
+            diff = diff * 3;
+        }
         block.UpdateValleySize(diff);
         return size;
     }
